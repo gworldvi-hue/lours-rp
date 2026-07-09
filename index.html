@@ -1,0 +1,1788 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LOURS RP — Штабная карта мира</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600;700&family=Spectral+SC:wght@500;600&family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap');
+
+:root{
+  --bg:#0b0f0d;
+  --bg2:#0e1512;
+  --panel:#141b18;
+  --panel2:#1a2320;
+  --line:#2b3733;
+  --line-soft:#1f2925;
+  --ink:#e9e4d4;
+  --ink-dim:#93a19a;
+  --ink-faint:#5f6d67;
+  --brass:#c9a227;
+  --brass-dim:#8a7222;
+  --rust:#a8462c;
+  --rust-bright:#d1602f;
+  --olive:#5c7358;
+  --teal:#3f7268;
+  --danger:#b3452f;
+  --good:#6f9463;
+  --navy:#1a5276;
+  --air:#2e86c1;
+  --sbs:#1a6e4a;
+  --sso:#6c3483;
+}
+
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:
+    radial-gradient(1200px 700px at 15% -10%, #14201b 0%, transparent 60%),
+    radial-gradient(1000px 600px at 100% 10%, #1a1410 0%, transparent 55%),
+    var(--bg);
+  color:var(--ink);
+  font-family:'Inter', sans-serif;
+  min-height:100vh;
+}
+::selection{background:var(--brass); color:#141b18;}
+
+h1,h2,h3,h4{font-family:'Spectral', serif; font-weight:600; margin:0 0 .3em 0; letter-spacing:.2px;}
+.eyebrow{
+  font-family:'JetBrains Mono', monospace;
+  text-transform:uppercase;
+  font-size:11px;
+  letter-spacing:2.5px;
+  color:var(--brass);
+  display:flex; align-items:center; gap:8px;
+}
+.eyebrow::before{content:""; width:16px; height:1px; background:var(--brass-dim);}
+.mono{font-family:'JetBrains Mono', monospace;}
+
+.topbar{
+  border-bottom:1px solid var(--line);
+  background:linear-gradient(180deg, rgba(20,27,24,.9), rgba(11,15,13,.4));
+  padding:22px 32px 18px;
+  position:sticky; top:0; z-index:50;
+  backdrop-filter: blur(6px);
+}
+.topbar-inner{max-width:1280px; margin:0 auto; display:flex; align-items:flex-end; justify-content:space-between; flex-wrap:wrap; gap:14px;}
+.brand{display:flex; align-items:baseline; gap:14px;}
+.brand-mark{
+  font-family:'Spectral SC', serif; font-weight:600; font-size:26px; letter-spacing:1px;
+  color:var(--ink);
+  border:1px solid var(--brass-dim); padding:6px 12px;
+  background:repeating-linear-gradient(135deg, rgba(201,162,39,.06) 0 6px, transparent 6px 12px);
+}
+.brand-sub{font-size:12.5px; color:var(--ink-dim); font-family:'JetBrains Mono',monospace;}
+.rp-clock{
+  font-family:'JetBrains Mono', monospace; font-size:12px; color:var(--ink-dim);
+  text-align:right;
+}
+.rp-clock b{color:var(--brass); font-weight:600;}
+
+.tabs{
+  max-width:1280px; margin:14px auto 0; display:flex; gap:2px; flex-wrap:wrap;
+}
+.tab-btn{
+  font-family:'JetBrains Mono', monospace; font-size:12px; letter-spacing:1px; text-transform:uppercase;
+  background:transparent; border:1px solid transparent; color:var(--ink-dim);
+  padding:10px 16px; cursor:pointer; transition:.15s;
+}
+.tab-btn:hover{color:var(--ink); border-color:var(--line);}
+.tab-btn.active{
+  color:var(--bg); background:var(--brass); border-color:var(--brass);
+}
+
+main{max-width:1280px; margin:0 auto; padding:36px 32px 80px;}
+.view{display:none; animation:fadein .25s ease;}
+.view.active{display:block;}
+@keyframes fadein{from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:translateY(0);}}
+
+.panel{
+  background:linear-gradient(180deg, var(--panel), var(--bg2));
+  border:1px solid var(--line);
+  padding:24px;
+}
+.panel + .panel{margin-top:18px;}
+.grid-2{display:grid; grid-template-columns:1.3fr .9fr; gap:18px;}
+@media(max-width:900px){.grid-2{grid-template-columns:1fr;}}
+
+label{font-family:'JetBrains Mono',monospace; font-size:11px; text-transform:uppercase; letter-spacing:1px; color:var(--ink-dim); display:block; margin-bottom:6px;}
+select,input[type=text],input[type=number],textarea{
+  width:100%; background:var(--bg2); border:1px solid var(--line); color:var(--ink);
+  padding:9px 10px; font-family:'Inter',sans-serif; font-size:13.5px;
+}
+select:focus,input:focus,textarea:focus{outline:none; border-color:var(--brass-dim);}
+input[type=range]{width:100%; accent-color:var(--brass);}
+.field{margin-bottom:14px;}
+.row{display:flex; gap:12px; flex-wrap:wrap;}
+.row > *{flex:1; min-width:150px;}
+
+button.btn{
+  font-family:'JetBrains Mono',monospace; text-transform:uppercase; font-size:12px; letter-spacing:1.5px;
+  background:var(--brass); color:#161006; border:none; padding:11px 20px; cursor:pointer; transition:.15s;
+}
+button.btn:hover{background:var(--rust-bright); color:#1a0d06;}
+button.btn.ghost{background:transparent; color:var(--ink-dim); border:1px solid var(--line);}
+button.btn.ghost:hover{color:var(--ink); border-color:var(--brass-dim);}
+button.btn.danger{background:var(--danger); color:#1a0d06;}
+hr.rule{border:none; border-top:1px solid var(--line); margin:20px 0;}
+
+.news-card{
+  border:1px solid var(--line); background:var(--panel2); padding:16px 18px; margin-bottom:12px;
+  position:relative; overflow:hidden;
+}
+.news-card::before{
+  content:attr(data-tag); position:absolute; top:10px; right:-34px; transform:rotate(35deg);
+  font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:2px; text-transform:uppercase;
+  background:var(--brass-dim); color:#161006; padding:2px 40px;
+}
+.news-card.blocked{
+  border-color:var(--danger);
+  opacity:0.6;
+}
+.news-card.blocked::before{
+  background:var(--danger);
+  content:"ЗАБЛОКИРОВАНО";
+}
+.news-meta{font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--ink-faint); margin-bottom:6px; letter-spacing:.5px;}
+.news-body{font-size:14.5px; line-height:1.55; color:var(--ink); padding-right:40px;}
+.news-title{font-family:'Spectral',serif; font-size:17px; font-weight:600; margin-bottom:4px;}
+.news-empty{color:var(--ink-faint); font-size:13px; font-style:italic; padding:20px 0;}
+.news-effect{font-size:12px; color:var(--brass-dim); margin-top:8px; font-family:'JetBrains Mono',monospace;}
+
+table{width:100%; border-collapse:collapse; font-size:13px;}
+th,td{padding:9px 10px; border-bottom:1px solid var(--line-soft); text-align:left;}
+th{
+  font-family:'JetBrains Mono',monospace; font-size:10.5px; text-transform:uppercase; letter-spacing:1px;
+  color:var(--brass); cursor:pointer; user-select:none; white-space:nowrap;
+}
+th:hover{color:var(--rust-bright);}
+tbody tr:hover{background:rgba(201,162,39,.05);}
+td.num{font-family:'JetBrains Mono',monospace; text-align:right;}
+td[contenteditable="true"]{cursor:text;}
+td[contenteditable="true"]:focus{outline:1px solid var(--brass-dim); background:rgba(201,162,39,.06);}
+.swatch{display:inline-block; width:10px; height:10px; margin-right:8px; vertical-align:middle; border:1px solid rgba(255,255,255,.2);}
+.tbl-wrap{overflow-x:auto;}
+
+.stat-row{display:flex; gap:14px; flex-wrap:wrap; margin-bottom:18px;}
+.stat{border:1px solid var(--line); padding:12px 16px; flex:1; min-width:150px; background:var(--panel2);}
+.stat .v{font-family:'Spectral',serif; font-size:24px; font-weight:600; color:var(--brass);}
+.stat .k{font-family:'JetBrains Mono',monospace; font-size:10.5px; text-transform:uppercase; color:var(--ink-dim); letter-spacing:1px;}
+
+.vs-block{display:flex; align-items:center; gap:16px; margin-bottom:18px;}
+.vs-side{flex:1; border:1px solid var(--line); padding:16px; background:var(--panel2);}
+.vs-side.attacker{border-left:3px solid var(--rust);}
+.vs-side.defender{border-left:3px solid var(--teal);}
+.vs-x{font-family:'Spectral SC',serif; font-size:20px; color:var(--brass-dim);}
+
+.bar-track{height:8px; background:var(--bg2); border:1px solid var(--line); margin-top:4px;}
+.bar-fill{height:100%; background:var(--rust-bright);}
+.bar-fill.def{background:var(--teal);}
+.bar-fill.navy{background:var(--navy);}
+.bar-fill.air{background:var(--air);}
+.bar-fill.sbs{background:var(--sbs);}
+.bar-fill.sso{background:var(--sso);}
+
+.war-phase{display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin:12px 0;}
+.war-phase .phase-btn{
+  font-family:'JetBrains Mono',monospace; font-size:11px; text-transform:uppercase; letter-spacing:0.5px;
+  background:var(--panel2); border:1px solid var(--line); color:var(--ink-dim); padding:8px; cursor:pointer;
+}
+.war-phase .phase-btn.active{background:var(--brass); color:var(--bg); border-color:var(--brass);}
+
+.branch-commands{
+  display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin:16px 0;
+}
+@media(max-width:800px){.branch-commands{grid-template-columns:repeat(2,1fr);}}
+.branch-card{
+  border:1px solid var(--line); background:var(--bg2); padding:14px; text-align:center;
+}
+.branch-card .branch-name{font-family:'Spectral SC',serif; font-size:14px; font-weight:600;}
+.branch-card .branch-status{font-size:11px; color:var(--ink-dim); margin:6px 0;}
+.branch-card select{font-size:11px; padding:4px 6px; background:var(--panel2); color:var(--ink); border:1px solid var(--line);}
+.branch-card .branch-stat{font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--brass); margin-top:6px;}
+
+.branch-navy .branch-name{color:var(--navy);}
+.branch-air .branch-name{color:var(--air);}
+.branch-sbs .branch-name{color:var(--sbs);}
+.branch-sso .branch-name{color:var(--sso);}
+
+.result-box{border:1px solid var(--brass-dim); background:rgba(201,162,39,.05); padding:20px; margin-top:18px;}
+.result-headline{font-family:'Spectral',serif; font-size:20px; font-weight:700; margin-bottom:8px; color:var(--brass);}
+.result-narrative{font-size:15px; line-height:1.8; color:var(--ink); white-space:pre-wrap;}
+.result-narrative .highlight{color:var(--brass); font-weight:600;}
+.result-narrative .attacker-color{color:var(--rust-bright);}
+.result-narrative .defender-color{color:var(--teal);}
+.result-narrative .action{color:var(--brass-dim); font-style:italic;}
+.result-narrative .loss{color:var(--danger); font-weight:600;}
+
+.metric-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-top:16px;}
+@media(max-width:800px){.metric-grid{grid-template-columns:repeat(2,1fr);}}
+.metric{border:1px solid var(--line); padding:10px 12px; text-align:center;}
+.metric .v{font-family:'JetBrains Mono',monospace; font-size:18px; color:var(--brass); font-weight:600;}
+.metric .k{font-size:10px; text-transform:uppercase; letter-spacing:.5px; color:var(--ink-dim); margin-top:2px;}
+
+.operation-log{font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--ink-faint); max-height:300px; overflow-y:auto; border-top:1px solid var(--line); padding-top:12px; margin-top:12px;}
+.operation-log .log-entry{padding:6px 0; border-bottom:1px solid var(--line-soft);}
+.log-entry .time{color:var(--brass-dim); margin-right:8px;}
+.log-entry .narrative{color:var(--ink); font-family:'Inter',sans-serif; font-size:13px; line-height:1.6;}
+
+.battle-map{
+  background:var(--bg2); border:1px solid var(--line); padding:16px; margin:12px 0; overflow:auto;
+}
+.battle-map svg{width:100%; height:auto; display:block;}
+
+.map-tabs{display:flex; gap:8px; margin-bottom:14px;}
+.map-tab-btn{
+  font-family:'JetBrains Mono',monospace; font-size:11px; text-transform:uppercase; letter-spacing:1px;
+  background:var(--panel2); border:1px solid var(--line); color:var(--ink-dim); padding:8px 14px; cursor:pointer;
+}
+.map-tab-btn.active{color:var(--bg); background:var(--brass); border-color:var(--brass);}
+.map-stage{position:relative; border:1px solid var(--line); overflow:hidden; background:#000;}
+.map-stage img{display:block; width:100%; height:auto;}
+.compare-layer{position:absolute; top:0; left:0; height:100%; overflow:hidden; border-right:2px solid var(--brass);}
+.compare-layer img{width:100%; height:100%; object-fit:cover; display:block;}
+.compare-wrap{position:relative;}
+.compare-wrap img.base{width:100%; display:block;}
+.compare-slider{width:100%; margin-top:10px;}
+.map-caption{font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--ink-dim); margin-top:8px;}
+
+.link-group{margin-bottom:22px;}
+.link-list{display:grid; grid-template-columns:repeat(2,1fr); gap:6px 20px;}
+@media(max-width:700px){.link-list{grid-template-columns:1fr;}}
+.link-item a{color:var(--ink); text-decoration:none; font-size:13.5px; border-bottom:1px dotted var(--line-soft);}
+.link-item a:hover{color:var(--brass); border-color:var(--brass-dim);}
+
+footer{border-top:1px solid var(--line); padding:24px 32px; text-align:center; color:var(--ink-faint); font-family:'JetBrains Mono',monospace; font-size:11px;}
+.note{font-size:12px; color:var(--ink-faint); font-style:italic; margin-top:10px;}
+.badge{display:inline-block; padding:2px 8px; font-size:10px; font-family:'JetBrains Mono',monospace; text-transform:uppercase; letter-spacing:1px; border:1px solid var(--line);}
+.badge.good{border-color:var(--good); color:var(--good);}
+.badge.bad{border-color:var(--danger); color:var(--danger);}
+.badge.war{background:var(--rust); color:var(--bg); border-color:var(--rust);}
+.badge.navy{background:var(--navy); color:var(--ink); border-color:var(--navy);}
+.badge.air{background:var(--air); color:var(--ink); border-color:var(--air);}
+.badge.sbs{background:var(--sbs); color:var(--ink); border-color:var(--sbs);}
+.badge.sso{background:var(--sso); color:var(--ink); border-color:var(--sso);}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <div class="brand-mark">LOURS RP</div>
+      <div class="brand-sub">Штабная карта мира · аналитический центр</div>
+    </div>
+    <div class="rp-clock">
+      Внутриигровая дата: <b id="rpDate">19 июня 2026</b><br>
+      Стран в реестре: <b id="countryCount">—</b>
+    </div>
+  </div>
+  <nav class="tabs">
+    <button class="tab-btn active" data-view="news">Сводка новостей</button>
+    <button class="tab-btn" data-view="econ">Экономика</button>
+    <button class="tab-btn" data-view="war">Военный анализ</button>
+    <button class="tab-btn" data-view="maps">Карты мира</button>
+    <button class="tab-btn" data-view="importtg">Импорт из Telegram</button>
+    <button class="tab-btn" data-view="portal">Портал / ТГ-ресурсы</button>
+  </nav>
+</header>
+
+<main>
+
+  <!-- NEWS -->
+  <section class="view active" id="view-news">
+    <div class="eyebrow">Генератор событий</div>
+    <h2>Сводка новостей мира Lours</h2>
+    <div class="grid-2">
+      <div class="panel">
+        <div id="newsFeed"></div>
+        <button class="btn ghost" onclick="clearNews()" style="margin-top:12px;">Очистить ленту</button>
+      </div>
+      <div class="panel" style="align-self:flex-start;">
+        <h3>Сгенерировать событие</h3>
+        <div class="field">
+          <label>Категория</label>
+          <select id="newsCategory">
+            <option value="auto">— автоматически —</option>
+            <option value="Политика">Политика</option>
+            <option value="Экономика">Экономика</option>
+            <option value="Военное дело">Военное дело</option>
+            <option value="Дипломатия">Дипломатия</option>
+            <option value="Происшествие">Происшествие</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Основная страна</label>
+          <select id="newsCountry"><option value="random">— случайная —</option></select>
+        </div>
+        <div class="field">
+          <label>Тон события</label>
+          <select id="newsTone">
+            <option value="neutral">Нейтральный</option>
+            <option value="positive">Позитивный</option>
+            <option value="negative">Тревожный</option>
+          </select>
+        </div>
+        <button class="btn" onclick="generateNews()">Сгенерировать</button>
+        <p class="note">Генератор комбинирует шаблонные сюжеты с данными реестра стран.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ECONOMY -->
+  <section class="view" id="view-econ">
+    <div class="eyebrow">Реестр показателей</div>
+    <h2>Экономический анализ стран</h2>
+    <div class="stat-row" id="econStats"></div>
+    <div class="panel">
+      <div class="row" style="margin-bottom:14px;">
+        <div class="field" style="flex:2;">
+          <label>Поиск / фильтр</label>
+          <input type="text" id="econFilter" placeholder="например: Донгбу" oninput="renderEconTable()">
+        </div>
+        <div class="field">
+          <label>Сортировать по</label>
+          <select id="econSort" onchange="renderEconTable()">
+            <option value="power">Индекс экон. мощи</option>
+            <option value="name">Названию</option>
+            <option value="gdp">ВВП</option>
+            <option value="gdppc">ВВП на душу</option>
+            <option value="pop">Населению</option>
+            <option value="stability">Стабильности</option>
+          </select>
+        </div>
+      </div>
+      <div class="tbl-wrap">
+        <table id="econTable">
+          <thead>
+            <tr>
+              <th>Страна</th><th>Население, млн</th><th>ВВП, млрд$</th><th>ВВП/душу, $</th>
+              <th>Пром-сть</th><th>Ресурсы</th><th>Стабильность</th><th>Индекс мощи</th><th>Торг. баланс</th>
+            </tr>
+          </thead>
+          <tbody id="econTbody"></tbody>
+        </table>
+      </div>
+      <p class="note">Ячейки редактируются прямо в таблице (клик → ввод числа).</p>
+    </div>
+    <div class="panel">
+      <h3>Добавить страну / фракцию в реестр</h3>
+      <div class="row">
+        <div class="field"><label>Название</label><input type="text" id="newName" placeholder="Название страны"></div>
+        <div class="field"><label>Население, млн</label><input type="number" id="newPop" value="10"></div>
+        <div class="field"><label>ВВП, млрд$</label><input type="number" id="newGdp" value="50"></div>
+        <div class="field"><label>Стабильность (1-10)</label><input type="number" id="newStab" value="6"></div>
+      </div>
+      <button class="btn" onclick="addCountry()">Добавить в реестр</button>
+      <button class="btn ghost" onclick="resetData()">Сбросить к исходным данным</button>
+    </div>
+  </section>
+
+  <!-- WAR -->
+  <section class="view" id="view-war">
+    <div class="eyebrow">Симуляция конфликта</div>
+    <h2>Военный анализ и прогноз боевых действий</h2>
+    
+    <div class="panel">
+      <div class="vs-block">
+        <div class="vs-side attacker">
+          <label>Сторона A</label>
+          <select id="warA"></select>
+        </div>
+        <div class="vs-x">VS</div>
+        <div class="vs-side defender">
+          <label>Сторона B</label>
+          <select id="warB"></select>
+        </div>
+      </div>
+
+      <div class="branch-commands">
+        <div class="branch-card branch-navy">
+          <div class="branch-name">⚓ ВМФ</div>
+          <div class="branch-status" id="navyStatus">Ожидание</div>
+          <select id="navyCommand" onchange="updateBranchCommand('navy')">
+            <option value="patrol">Патрулирование</option>
+            <option value="strike">Ударная группа</option>
+            <option value="blockade">Блокада</option>
+            <option value="landing">Десант</option>
+            <option value="defense">Береговая оборона</option>
+          </select>
+          <div class="branch-stat" id="navyStat">⚓ 0 кораблей</div>
+        </div>
+        <div class="branch-card branch-air">
+          <div class="branch-name">✈️ ВВС</div>
+          <div class="branch-status" id="airStatus">Ожидание</div>
+          <select id="airCommand" onchange="updateBranchCommand('air')">
+            <option value="patrol">Патрулирование</option>
+            <option value="strike">Ударная авиация</option>
+            <option value="intercept">Перехват</option>
+            <option value="bombard">Бомбардировка</option>
+            <option value="recon">Разведка</option>
+          </select>
+          <div class="branch-stat" id="airStat">✈️ 0 самолётов</div>
+        </div>
+        <div class="branch-card branch-sbs">
+          <div class="branch-name">🌊 СБС</div>
+          <div class="branch-status" id="sbsStatus">Ожидание</div>
+          <select id="sbsCommand" onchange="updateBranchCommand('sbs')">
+            <option value="recon">Разведка</option>
+            <option value="sabotage">Диверсии</option>
+            <option value="assault">Штурм</option>
+            <option value="defense">Оборона</option>
+            <option value="evacuation">Эвакуация</option>
+          </select>
+          <div class="branch-stat" id="sbsStat">🎯 0 групп</div>
+        </div>
+        <div class="branch-card branch-sso">
+          <div class="branch-name">🔱 ССО</div>
+          <div class="branch-status" id="ssoStatus">Ожидание</div>
+          <select id="ssoCommand" onchange="updateBranchCommand('sso')">
+            <option value="recon">Глубокая разведка</option>
+            <option value="sabotage">Спецоперации</option>
+            <option value="assault">Штурм</option>
+            <option value="protection">Охрана ВИП</option>
+            <option value="extraction">Эвакуация</option>
+          </select>
+          <div class="branch-stat" id="ssoStat">💀 0 бойцов</div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="field">
+          <label>Рельеф ТВД</label>
+          <select id="warTerrain">
+            <option value="plains">Равнина / степь</option>
+            <option value="mountains">Горы / плоскогорье</option>
+            <option value="urban">Город / плотная застройка</option>
+            <option value="forest">Лес</option>
+            <option value="island">Остров / прибрежная зона</option>
+            <option value="desert">Пустыня</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Климат ТВД</label>
+          <select id="warClimate">
+            <option value="temperate">Умеренный</option>
+            <option value="arctic">Арктический / субарктический</option>
+            <option value="tropical">Тропический / муссонный</option>
+            <option value="arid">Засушливый / пустынный</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Логистика A: <span id="distVal" class="mono">50</span>%</label>
+          <input type="range" id="warDistance" min="0" max="100" value="50" oninput="document.getElementById('distVal').textContent=this.value">
+        </div>
+      </div>
+
+      <button class="btn" onclick="runWarSim()">🚀 Провести анализ операции</button>
+      
+      <div id="warResult"></div>
+      <div id="battleMapContainer"></div>
+    </div>
+
+    <div class="panel">
+      <h3>📊 Управление родами войск</h3>
+      <p class="note" style="font-size:12.5px;">
+        <b>⚓ ВМФ</b> — патрулирование, ударные группы, блокада, десант, береговая оборона<br>
+        <b>✈️ ВВС</b> — патрулирование, ударная авиация, перехват, бомбардировка, разведка<br>
+        <b>🌊 СБС</b> — разведка, диверсии, штурм, оборона, эвакуация<br>
+        <b>🔱 ССО</b> — глубокая разведка, спецоперации, штурм, охрана, эвакуация
+      </p>
+    </div>
+  </section>
+
+  <!-- MAPS -->
+  <section class="view" id="view-maps">
+    <div class="eyebrow">Картография</div>
+    <h2>Карты мира Lours</h2>
+    <div class="panel">
+      <div class="map-tabs">
+        <button class="map-tab-btn active" data-map="politika">Политическая карта</button>
+        <button class="map-tab-btn" data-map="relief">Карта рельефа</button>
+        <button class="map-tab-btn" data-map="klimat">Карта климата</button>
+        <button class="map-tab-btn" data-map="compare">Сравнение слоёв</button>
+      </div>
+      <div id="mapSingle" class="map-stage">
+        <img id="mapImg" src="karta_politika.jpg" alt="карта">
+      </div>
+      <div id="mapCompare" class="compare-wrap" style="display:none;">
+        <img class="base" src="karta_politika.jpg" alt="базовый слой">
+        <div class="compare-layer" id="compareLayer" style="width:50%;">
+          <img src="karta_relief.jpg" alt="слой сравнения">
+        </div>
+        <input type="range" class="compare-slider" id="compareSlider" min="0" max="100" value="50" oninput="updateCompare()">
+        <div class="row" style="margin-top:10px;">
+          <div class="field">
+            <label>Верхний слой</label>
+            <select id="compareTop" onchange="updateCompareLayers()">
+              <option value="karta_relief.jpg">Рельеф</option>
+              <option value="karta_klimat.jpg">Климат</option>
+              <option value="karta_politika.jpg">Политическая</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Нижний слой</label>
+            <select id="compareBottom" onchange="updateCompareLayers()">
+              <option value="karta_politika.jpg" selected>Политическая</option>
+              <option value="karta_relief.jpg">Рельеф</option>
+              <option value="karta_klimat.jpg">Климат</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <p class="map-caption" id="mapCaption">Политическая карта: границы государств и фракций мира Lours.</p>
+      <p class="note">Файлы карт (karta_politika.jpg, karta_relief.jpg, karta_klimat.jpg) должны находиться в той же папке.</p>
+    </div>
+  </section>
+
+  <!-- IMPORT TG -->
+  <section class="view" id="view-importtg">
+    <div class="eyebrow">Анализ первоисточников</div>
+    <h2>Импорт и анализ постов из Telegram</h2>
+    <div class="panel">
+      <p class="note" style="font-size:12.5px; margin-top:0;">
+        <b>Схема работы:</b><br>
+        1. Запустите <span class="mono">telegram_export_public.py</span> — выгрузит посты в <span class="mono">lours_export.json</span><br>
+        2. Загрузите файл сюда кнопкой ниже<br>
+        3. Посты из заблокированных каналов отклоняются автоматически<br>
+        4. <b>Автоимпорт раз в 6 часов</b>
+      </p>
+      <div class="row">
+        <div class="field">
+          <label>Загрузить lours_export.json</label>
+          <input type="file" id="importFile" accept=".json" onchange="handleFileImport(event)">
+        </div>
+        <div class="field" style="flex:0.5;">
+          <label>Статус</label>
+          <div id="importStatus" style="font-size:13px; color:var(--ink-dim); padding-top:6px;">Ожидание загрузки</div>
+        </div>
+      </div>
+      <div class="field">
+        <label>Или вставьте текст постов вручную (разделяйте <span class="mono">---</span>)</label>
+        <textarea id="importText" rows="4" placeholder="Вставьте сюда текст поста(ов) из канала..."></textarea>
+      </div>
+      <div class="row">
+        <button class="btn" onclick="analyzeImportText()">Проанализировать текст</button>
+        <button class="btn ghost" onclick="document.getElementById('importText').value=''">Очистить поле</button>
+        <button class="btn ghost" onclick="clearSuggestions()">Очистить предложения</button>
+        <button class="btn ghost" onclick="manualAutoImport()">🔄 Принудительный автоимпорт</button>
+      </div>
+      <hr class="rule">
+      <div class="row">
+        <div class="field">
+          <label>Автоимпорт (каждые 6 часов)</label>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <span style="font-size:13px; color:var(--brass);" id="autoStatus">✅ Активен</span>
+            <span style="font-size:12px; color:var(--ink-faint);" id="lastImportTime">Последний: —</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="panel">
+      <h3>Предложенные события <span class="mono" style="color:var(--ink-dim); font-size:12px;">(<span id="suggCount">0</span>)</span></h3>
+      <div id="suggList"><div class="news-empty">Пока нет проанализированных постов.</div></div>
+    </div>
+    <div class="panel">
+      <h3>📋 Заблокированные каналы</h3>
+      <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;">
+        <span class="badge bad">+63JXyTXIj_9jZDNi</span>
+        <span class="badge bad">+UXpmkI63Hgk1MDhi</span>
+        <span class="badge bad">apexkosmos_lours</span>
+        <span class="badge bad">+UhMkJIYpCTA4MDQy</span>
+        <span class="badge bad">+eakV4xThNlBjYThi</span>
+        <span class="badge bad">+ub4sSLvElJQ2Mzky</span>
+        <span class="badge bad">MEME_LOURS_RP</span>
+        <span class="badge bad">pravila_lours</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- PORTAL -->
+  <section class="view" id="view-portal">
+    <div class="eyebrow">Единая точка входа</div>
+    <h2>Все ТГ-ресурсы проекта</h2>
+    <div class="panel link-group">
+      <h3>🏳 Активные страны</h3>
+      <div class="link-list" id="linksCountries"></div>
+    </div>
+    <div class="panel link-group">
+      <h3>🏴‍☠️ Активные группировки</h3>
+      <div class="link-list">
+        <div class="link-item"><a href="https://t.me/BlackWhiteOcta_Lours" target="_blank">Black &amp; White Octa</a></div>
+        <div class="link-item"><a href="https://t.me/PH_Lours" target="_blank">PH</a></div>
+      </div>
+    </div>
+    <div class="panel link-group">
+      <h3>🌐 Всемирные организации</h3>
+      <div class="link-list">
+        <div class="link-item"><a href="https://t.me/+Sivtq18nROBiZmMy" target="_blank">Организация №1</a></div>
+        <div class="link-item"><a href="https://t.me/+aDPd40fwlJ44ZmYy" target="_blank">Организация №2</a></div>
+        <div class="link-item"><a href="https://t.me/apexkosmos_lours" target="_blank">Apex Kosmos</a></div>
+        <div class="link-item"><a href="https://t.me/+enU-nU8wp5I0ZGI6" target="_blank">Организация №3</a></div>
+        <div class="link-item"><a href="https://t.me/vamflours" target="_blank">VAMF</a></div>
+        <div class="link-item"><a href="https://t.me/gfv_lours" target="_blank">GFV</a></div>
+        <div class="link-item"><a href="https://t.me/lourazon_lours" target="_blank">Lourazon</a></div>
+        <div class="link-item"><a href="https://t.me/registry_lours" target="_blank">Реестр</a></div>
+        <div class="link-item"><a href="https://t.me/interpol_lours" target="_blank">Интерпол</a></div>
+      </div>
+    </div>
+    <div class="panel link-group">
+      <h3>🇪🇺 Союзы</h3>
+      <div class="link-list">
+        <div class="link-item"><a href="https://t.me/LONliga" target="_blank">LON Liga</a></div>
+        <div class="link-item"><a href="https://t.me/SKO_lours" target="_blank">СКО</a></div>
+        <div class="link-item"><a href="https://t.me/ESNGRPLours" target="_blank">ESNGR</a></div>
+      </div>
+    </div>
+    <div class="panel link-group">
+      <h3>⚙️ ООС / технические чаты</h3>
+      <div class="link-list">
+        <div class="link-item"><a href="https://t.me/+63JXyTXIj_9jZDNi" target="_blank">ООС чат №1</a></div>
+        <div class="link-item"><a href="https://t.me/+UXpmkI63Hgk1MDhi" target="_blank">ООС чат №2</a></div>
+        <div class="link-item"><a href="https://t.me/apexkosmos_lours" target="_blank">Apex Kosmos</a></div>
+        <div class="link-item"><a href="https://t.me/+UhMkJIYpCTA4MDQy" target="_blank">ООС чат №3</a></div>
+        <div class="link-item"><a href="https://t.me/+eakV4xThNlBjYThi" target="_blank">ООС чат №4</a></div>
+        <div class="link-item"><a href="https://t.me/+ub4sSLvElJQ2Mzky" target="_blank">ООС чат №5</a></div>
+        <div class="link-item"><a href="https://t.me/MEME_LOURS_RP" target="_blank">Мемы Lours RP</a></div>
+        <div class="link-item"><a href="https://t.me/pravila_lours" target="_blank">Правила</a></div>
+      </div>
+    </div>
+    <div class="panel link-group">
+      <h3>🤖 Бот и общая папка</h3>
+      <div class="link-list">
+        <div class="link-item"><a href="https://t.me/ManualLours_bot" target="_blank">@ManualLours_bot</a></div>
+        <div class="link-item"><a href="https://t.me/addlist/AdID78dmluc0YjQ6" target="_blank">Папка со всеми странами</a></div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  LOURS RP · штабная карта мира · данные хранятся локально в вашем браузере (localStorage)
+</footer>
+
+<script>
+// ============================================================
+// ДАННЫЕ РЕЕСТРА СТРАН
+// ============================================================
+const SEED_COUNTRIES = [
+  {id:'akvilonia', name:'Республика Калзахия (Аквилония)', tg:'akvilonia_lours', color:'#7a4fb0',
+   pop:34, gdp:210, industry:6, resources:6, stability:6, trade:2,
+   economy: { agriculture:8, manufacturing:35, services:45, tech:12, energy:5, mining:3 },
+   terrain:'mountains', climate:'temperate',
+   mil:{manpower:180, tech:6, air:5, navy:4, logistics:6, morale:70, organization:75, equipment:80}},
+  {id:'askend', name:'Аскенд', tg:'askend_lours', color:'#3fa0c9',
+   pop:12, gdp:60, industry:4, resources:5, stability:5, trade:-1,
+   economy: { agriculture:15, manufacturing:20, services:50, tech:8, energy:5, mining:2 },
+   terrain:'island', climate:'temperate',
+   mil:{manpower:60, tech:4, air:3, navy:6, logistics:5, morale:65, organization:70, equipment:65}},
+  {id:'bdg', name:'Брадостанское Демократическое государство', tg:'bdg_lours', color:'#c94f4f',
+   pop:47, gdp:340, industry:7, resources:5, stability:7, trade:4,
+   economy: { agriculture:6, manufacturing:40, services:38, tech:10, energy:4, mining:2 },
+   terrain:'plains', climate:'temperate',
+   mil:{manpower:220, tech:7, air:6, navy:5, logistics:7, morale:72, organization:78, equipment:75}},
+  {id:'vrsc', name:'Вторая Республика Сан-Цара', tg:'vrsc_lours', color:'#4fae6e',
+   pop:29, gdp:150, industry:5, resources:6, stability:5, trade:1,
+   economy: { agriculture:12, manufacturing:25, services:45, tech:8, energy:6, mining:4 },
+   terrain:'island', climate:'tropical',
+   mil:{manpower:140, tech:5, air:4, navy:6, logistics:5, morale:60, organization:65, equipment:60}},
+  {id:'pf', name:'Партумская Федерация', tg:'pf_lours', color:'#c9a227',
+   pop:61, gdp:430, industry:8, resources:7, stability:6, trade:5,
+   economy: { agriculture:4, manufacturing:42, services:40, tech:12, energy:4, mining:3 },
+   terrain:'plains', climate:'temperate',
+   mil:{manpower:310, tech:8, air:7, navy:6, logistics:8, morale:75, organization:80, equipment:85}},
+  {id:'kk', name:'Королевство Квирсленд', tg:'kk_lours', color:'#b06fae',
+   pop:18, gdp:120, industry:5, resources:4, stability:8, trade:2,
+   economy: { agriculture:10, manufacturing:28, services:50, tech:6, energy:4, mining:2 },
+   terrain:'forest', climate:'temperate',
+   mil:{manpower:80, tech:6, air:4, navy:3, logistics:6, morale:80, organization:75, equipment:70}},
+  {id:'gruvia', name:'Грувийская Империя', tg:'gruvia_lours', color:'#2f6b4f',
+   pop:88, gdp:610, industry:9, resources:8, stability:7, trade:6,
+   economy: { agriculture:3, manufacturing:45, services:35, tech:15, energy:4, mining:5 },
+   terrain:'mountains', climate:'temperate',
+   mil:{manpower:420, tech:9, air:8, navy:7, logistics:8, morale:78, organization:82, equipment:90}},
+  {id:'gms', name:'Горловой Морской Союз', tg:'gms_lours', color:'#2f7fae',
+   pop:15, gdp:95, industry:4, resources:5, stability:6, trade:1,
+   economy: { agriculture:8, manufacturing:20, services:55, tech:7, energy:5, mining:5 },
+   terrain:'island', climate:'arctic',
+   mil:{manpower:55, tech:5, air:3, navy:8, logistics:6, morale:68, organization:70, equipment:65}},
+  {id:'korkaria', name:'Коркария', tg:'korkaria_lours', color:'#a06a2f',
+   pop:22, gdp:88, industry:4, resources:6, stability:4, trade:-2,
+   economy: { agriculture:20, manufacturing:15, services:40, tech:5, energy:8, mining:12 },
+   terrain:'desert', climate:'arid',
+   mil:{manpower:95, tech:4, air:3, navy:2, logistics:4, morale:55, organization:60, equipment:50}},
+  {id:'tatulsk', name:'Татульск', tg:'tatulsk_lours', color:'#7a7a2f',
+   pop:9, gdp:38, industry:3, resources:5, stability:5, trade:0,
+   economy: { agriculture:18, manufacturing:12, services:55, tech:5, energy:6, mining:4 },
+   terrain:'plains', climate:'arctic',
+   mil:{manpower:35, tech:4, air:2, navy:2, logistics:4, morale:58, organization:62, equipment:55}},
+  {id:'dongbu', name:'Донгбу', tg:'dongbu_lours', color:'#c96f2f',
+   pop:53, gdp:290, industry:7, resources:5, stability:6, trade:3,
+   economy: { agriculture:7, manufacturing:38, services:42, tech:10, energy:3, mining:2 },
+   terrain:'urban', climate:'temperate',
+   mil:{manpower:260, tech:7, air:6, navy:5, logistics:7, morale:70, organization:76, equipment:72}},
+  {id:'ron', name:'РОН', tg:'ron_lours', color:'#9c4a2f',
+   pop:26, gdp:110, industry:5, resources:6, stability:4, trade:-1,
+   economy: { agriculture:14, manufacturing:22, services:48, tech:6, energy:5, mining:5 },
+   terrain:'plains', climate:'temperate',
+   mil:{manpower:150, tech:5, air:4, navy:3, logistics:5, morale:60, organization:65, equipment:58}},
+  {id:'vbk', name:'Винско-Боккийская конфедерация', tg:'vbk_lours', color:'#4f9c9c',
+   pop:20, gdp:105, industry:5, resources:5, stability:6, trade:1,
+   economy: { agriculture:12, manufacturing:28, services:45, tech:6, energy:5, mining:4 },
+   terrain:'forest', climate:'temperate',
+   mil:{manpower:90, tech:5, air:3, navy:4, logistics:5, morale:65, organization:68, equipment:62}},
+  {id:'jeffrison', name:'Джеффрисон', tg:'jeffrison_lours', color:'#4f6fae',
+   pop:41, gdp:260, industry:6, resources:6, stability:7, trade:3,
+   economy: { agriculture:6, manufacturing:35, services:44, tech:11, energy:3, mining:3 },
+   terrain:'plains', climate:'temperate',
+   mil:{manpower:180, tech:6, air:5, navy:5, logistics:6, morale:72, organization:74, equipment:70}},
+  {id:'layo', name:'Лайо', tg:'layo_lours', color:'#8fae4f',
+   pop:7, gdp:22, industry:2, resources:4, stability:5, trade:-1,
+   economy: { agriculture:25, manufacturing:10, services:55, tech:4, energy:3, mining:3 },
+   terrain:'island', climate:'tropical',
+   mil:{manpower:20, tech:3, air:1, navy:3, logistics:3, morale:55, organization:55, equipment:45}},
+  {id:'ruffise', name:'Раффайс', tg:'ruffise_lours', color:'#ae4f8f',
+   pop:16, gdp:70, industry:4, resources:4, stability:5, trade:0,
+   economy: { agriculture:14, manufacturing:22, services:50, tech:6, energy:4, mining:4 },
+   terrain:'forest', climate:'temperate',
+   mil:{manpower:65, tech:4, air:3, navy:3, logistics:4, morale:62, organization:65, equipment:55}}
+];
+
+const TERRAIN_LABELS = {plains:'Равнина/степь', mountains:'Горы/плоскогорье', urban:'Город', forest:'Лес', island:'Остров', desert:'Пустыня'};
+const CLIMATE_LABELS = {temperate:'Умеренный', arctic:'Арктический', tropical:'Тропический', arid:'Засушливый'};
+const DEFENSE_BONUS = {plains:1.0, mountains:1.45, urban:1.4, forest:1.25, island:1.3, desert:0.95};
+const CLIMATE_PENALTY = {temperate:1.0, arctic:0.78, tropical:0.82, arid:0.87};
+
+const BLOCKLIST = [
+  '+63JXyTXIj_9jZDNi','+UXpmkI63Hgk1MDhi','apexkosmos_lours',
+  '+UhMkJIYpCTA4MDQy','+eakV4xThNlBjYThi','+ub4sSLvElJQ2Mzky',
+  'MEME_LOURS_RP','pravila_lours'
+];
+
+// ============================================================
+// ХРАНИЛИЩЕ
+// ============================================================
+const STORE_KEY = 'loursrp_countries_v1';
+const NEWS_KEY = 'loursrp_news_v1';
+const WAR_LOG_KEY = 'loursrp_war_log_v1';
+let countries = loadCountries();
+let newsFeed = loadNews();
+let warLog = loadWarLog();
+let rpDayOffset = 0;
+let autoImportInterval = null;
+
+function loadCountries(){
+  try{ const raw = localStorage.getItem(STORE_KEY); if(raw) return JSON.parse(raw); }catch(e){}
+  return JSON.parse(JSON.stringify(SEED_COUNTRIES));
+}
+function saveCountries(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(countries)); }catch(e){} }
+function loadNews(){
+  try{ const raw = localStorage.getItem(NEWS_KEY); if(raw) return JSON.parse(raw); }catch(e){}
+  return [];
+}
+function saveNews(){ try{ localStorage.setItem(NEWS_KEY, JSON.stringify(newsFeed)); }catch(e){} }
+function loadWarLog(){
+  try{ const raw = localStorage.getItem(WAR_LOG_KEY); if(raw) return JSON.parse(raw); }catch(e){}
+  return [];
+}
+function saveWarLog(){ try{ localStorage.setItem(WAR_LOG_KEY, JSON.stringify(warLog)); }catch(e){} }
+
+function resetData(){
+  if(!confirm('Сбросить все данные?')) return;
+  countries = JSON.parse(JSON.stringify(SEED_COUNTRIES));
+  newsFeed = []; warLog = [];
+  saveCountries(); saveNews(); saveWarLog();
+  initAll();
+}
+
+// ============================================================
+// НАВИГАЦИЯ
+// ============================================================
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('view-'+btn.dataset.view).classList.add('active');
+  });
+});
+
+// ============================================================
+// ЭКОНОМИКА
+// ============================================================
+function gdpPerCapita(c){ return Math.round((c.gdp*1e9)/(c.pop*1e6)); }
+function powerIndex(c){
+  return Math.round((c.gdp*0.42 + c.industry*9 + c.resources*7 + c.stability*6 + c.pop*0.6 + c.mil.manpower*0.05));
+}
+function renderEconStats(){
+  const totalGdp = countries.reduce((s,c)=>s+c.gdp,0);
+  const totalPop = countries.reduce((s,c)=>s+c.pop,0);
+  const avgStab = (countries.reduce((s,c)=>s+c.stability,0)/countries.length).toFixed(1);
+  const leader = [...countries].sort((a,b)=>powerIndex(b)-powerIndex(a))[0];
+  document.getElementById('econStats').innerHTML = `
+    <div class="stat"><div class="v">$${totalGdp.toLocaleString('ru')} млрд</div><div class="k">Суммарный ВВП мира</div></div>
+    <div class="stat"><div class="v">${totalPop.toLocaleString('ru')} млн</div><div class="k">Совокупное население</div></div>
+    <div class="stat"><div class="v">${avgStab}</div><div class="k">Средняя стабильность</div></div>
+    <div class="stat"><div class="v">${leader.name.split(' ')[0]}</div><div class="k">Экономический лидер</div></div>
+  `;
+}
+function renderEconTable(){
+  const filter = (document.getElementById('econFilter').value||'').toLowerCase();
+  const sortBy = document.getElementById('econSort').value;
+  let rows = countries.filter(c=>c.name.toLowerCase().includes(filter));
+  const sorters = {
+    power:(a,b)=>powerIndex(b)-powerIndex(a),
+    name:(a,b)=>a.name.localeCompare(b.name,'ru'),
+    gdp:(a,b)=>b.gdp-a.gdp,
+    gdppc:(a,b)=>gdpPerCapita(b)-gdpPerCapita(a),
+    pop:(a,b)=>b.pop-a.pop,
+    stability:(a,b)=>b.stability-a.stability
+  };
+  rows.sort(sorters[sortBy]);
+  const tbody = document.getElementById('econTbody');
+  tbody.innerHTML = rows.map(c=>`
+    <tr data-id="${c.id}">
+      <td><span class="swatch" style="background:${c.color}"></span>${c.name}</td>
+      <td class="num" contenteditable="true" data-field="pop">${c.pop}</td>
+      <td class="num" contenteditable="true" data-field="gdp">${c.gdp}</td>
+      <td class="num">${gdpPerCapita(c).toLocaleString('ru')}</td>
+      <td class="num" contenteditable="true" data-field="industry">${c.industry}</td>
+      <td class="num" contenteditable="true" data-field="resources">${c.resources}</td>
+      <td class="num" contenteditable="true" data-field="stability">${c.stability}</td>
+      <td class="num mono" style="color:var(--brass)">${powerIndex(c)}</td>
+      <td class="num" contenteditable="true" data-field="trade">${c.trade>0?'+':''}${c.trade}</td>
+    </tr>
+  `).join('') || '<tr><td colspan="9" class="news-empty">Ничего не найдено</td></tr>';
+
+  tbody.querySelectorAll('td[contenteditable]').forEach(td=>{
+    td.addEventListener('blur', ()=>{
+      const id = td.parentElement.dataset.id;
+      const field = td.dataset.field;
+      const c = countries.find(x=>x.id===id);
+      const val = parseFloat(td.textContent.replace(',','.').replace('+',''));
+      if(!isNaN(val)){ c[field] = val; saveCountries(); renderEconStats(); renderEconTable(); populateSelectors(); }
+    });
+  });
+  document.querySelectorAll('th').forEach((th,i)=>{
+    th.onclick = ()=>{
+      const map = ['name','pop','gdp','gdppc','industry','resources','stability','power','trade'];
+      if(map[i]){ document.getElementById('econSort').value = map[i]; renderEconTable(); }
+    };
+  });
+}
+function addCountry(){
+  const name = document.getElementById('newName').value.trim();
+  if(!name){ alert('Введите название страны'); return; }
+  const id = 'c'+Date.now();
+  countries.push({
+    id, name, tg:'', color:'#'+Math.floor(Math.random()*0xffffff).toString(16).padStart(6,'0'),
+    pop: parseFloat(document.getElementById('newPop').value)||1,
+    gdp: parseFloat(document.getElementById('newGdp').value)||1,
+    industry:4, resources:4, stability: parseFloat(document.getElementById('newStab').value)||5, trade:0,
+    economy: { agriculture:10, manufacturing:20, services:50, tech:6, energy:4, mining:2 },
+    terrain:'plains', climate:'temperate',
+    mil:{manpower:30, tech:4, air:2, navy:2, logistics:4, morale:60, organization:60, equipment:50}
+  });
+  saveCountries();
+  document.getElementById('newName').value='';
+  initAll();
+}
+
+function populateSelectors(){
+  const newsSel = document.getElementById('newsCountry');
+  const warA = document.getElementById('warA');
+  const warB = document.getElementById('warB');
+  newsSel.innerHTML = '<option value="random">— случайная —</option>' + countries.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+  const opts = countries.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+  warA.innerHTML = opts;
+  warB.innerHTML = opts;
+  if(countries.length>1) warB.selectedIndex = 1;
+  document.getElementById('countryCount').textContent = countries.length;
+}
+
+function advanceRpDate(days){
+  rpDayOffset += days;
+  const base = new Date(2026,5,19);
+  base.setDate(base.getDate()+rpDayOffset);
+  document.getElementById('rpDate').textContent = base.toLocaleDateString('ru-RU',{day:'numeric',month:'long',year:'numeric'});
+}
+
+// ============================================================
+// НОВОСТИ
+// ============================================================
+const TEMPLATES = {
+  'Политика':[
+    "В {A} прошли внеочередные заседания правительства. Уровень стабильности ({stab}/10).",
+    "Правительство {A} анонсировало реформу управления.",
+    "Дипломатический корпус {A} выступил с заявлением по поводу отношений с {B}."
+  ],
+  'Экономика':[
+    "Центробанк {A} зафиксировал изменение торгового баланса на {trade} пунктов; ВВП — ${gdp} млрд.",
+    "Промышленный сектор {A} нарастил выпуск продукции.",
+    "Аналитики отмечают рост нагрузки на ресурсную базу {A} — индекс {res}/10."
+  ],
+  'Военное дело':[
+    "Генштаб {A} провёл манёвры вблизи границы с {B}. Задействовано {manpower} тыс. человек.",
+    "Военное ведомство {A} сообщило о модернизации армии; тех. индекс — {tech}/10.",
+    "Пограничный инцидент между {A} и {B}."
+  ],
+  'Дипломатия':[
+    "Делегации {A} и {B} провели переговоры.",
+    "{A} выступила с инициативой сотрудничества с {B}.",
+    "Посольство {A} выразило протест в связи с действиями {B}."
+  ],
+  'Происшествие':[
+    "В {A} зафиксирована чрезвычайная ситуация.",
+    "Крупная авария на инфраструктурном объекте {A}.",
+    "Сообщается о беспорядках в {A}; стабильность — {stab}/10."
+  ]
+};
+const TONE_PREFIX = {
+  positive:["[Позитивная динамика] ", "[Успех] "],
+  negative:["[Тревожный сигнал] ", "[Кризис] "],
+  neutral:[""]
+};
+function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+
+function generateNews(){
+  const catSel = document.getElementById('newsCategory').value;
+  const cat = catSel==='auto' ? pick(Object.keys(TEMPLATES)) : catSel;
+  const tone = document.getElementById('newsTone').value;
+  const countrySel = document.getElementById('newsCountry').value;
+  const A = countrySel==='random' ? pick(countries) : countries.find(c=>c.id===countrySel);
+  let B = pick(countries.filter(c=>c.id!==A.id));
+  const tmpl = pick(TEMPLATES[cat]);
+  const text = tmpl
+    .replaceAll('{A}', A.name).replaceAll('{B}', B.name)
+    .replaceAll('{stab}', A.stability).replaceAll('{trade}', (A.trade>0?'+':'')+A.trade)
+    .replaceAll('{gdp}', A.gdp).replaceAll('{res}', A.resources)
+    .replaceAll('{manpower}', A.mil.manpower).replaceAll('{tech}', A.mil.tech);
+  const prefix = pick(TONE_PREFIX[tone]);
+  advanceRpDate(Math.floor(Math.random()*4)+1);
+  const dateStr = document.getElementById('rpDate').textContent;
+  newsFeed.unshift({ cat, tone, title: prefix + cat.toUpperCase()+': '+A.name, text, date: dateStr, ts: Date.now() });
+  saveNews();
+  renderNews();
+}
+function clearNews(){
+  if(!confirm('Очистить ленту?')) return;
+  newsFeed = []; saveNews(); renderNews();
+}
+function renderNews(){
+  const el = document.getElementById('newsFeed');
+  if(newsFeed.length===0){ el.innerHTML = '<div class="news-empty">Лента пуста.</div>'; return; }
+  el.innerHTML = newsFeed.map(n=>`
+    <div class="news-card ${n.blocked ? 'blocked' : ''}" data-tag="${n.cat}">
+      <div class="news-meta">${n.date} · ${n.cat} ${n.channel ? '· @'+n.channel : ''}</div>
+      <div class="news-title">${n.title}</div>
+      <div class="news-body">${n.text}</div>
+      ${n.effect ? `<div class="news-effect">⚡ ${n.effect}</div>` : ''}
+    </div>
+  `).join('');
+}
+
+// ============================================================
+// ИМПОРТ ИЗ TELEGRAM
+// ============================================================
+const ALIASES = {
+  akvilonia:['аквилони','калзахия','акви'], askend:['аскенд'], bdg:['брадостан','бдг'],
+  vrsc:['сан-цара','санцара','врсц'], pf:['партумск','партум','пф'], kk:['квирсленд','квирс'],
+  gruvia:['грувия','грувийск'], gms:['горловой','горловск','гмс'], korkaria:['коркари'],
+  tatulsk:['татульск'], dongbu:['донгбу'], ron:['рон'],
+  vbk:['винско-бокк','боккийск','вбк'], jeffrison:['джеффрисон'], layo:['лайо'], ruffise:['раффайс']
+};
+
+const SMART_CATEGORIES = {
+  'Экономика': {
+    keywords: ['ввп','экономик','торгов','бюджет','рынок','промышленност','экспорт','импорт','инфляц','валют','кредит','инвестиц','производств','завод','предприят','доход','расход','прибыль','убыток','кризис','рост','падени'],
+    context: ['млрд','миллиард','млн','миллион','процент','доллар','рубль','валюта']
+  },
+  'Политика': {
+    keywords: ['президент','правительств','парламент','выбор','указ','закон','министр','реформ','отставк','депутат','голосован','парти','лидер','заявлен','выступлен','совещан','заседани'],
+    context: ['власть','оппозици','режим','демократ','авторитар']
+  },
+  'Дипломатия': {
+    keywords: ['переговор','саммит','посол','союз','договор','дипломат','делегац','встреч','визит','соглашен','меморандум','консульт','отношен','партнер','альянс'],
+    context: ['международн','региональн','глобальн']
+  },
+  'Военное дело': {
+    keywords: ['арми','войск','атак','наступлен','мобилизац','флот','авиаци','обстрел','конфликт','фронт','контратак','вторжен','удар','бомб','ракет','дрон','беспилот','кибер','база','снаряд','танк','броня','пехота','спецназ','разведк'],
+    context: ['военн','боев','операц','маневр','учени']
+  },
+  'Происшествие': {
+    keywords: ['авари','катастроф','чрезвычайн','пожар','наводнен','взрыв','инцидент','землетряс','цунами','затоплен','обвал','ураган','шторм','эпидеми'],
+    context: ['спас','жертв','пострадавш']
+  },
+  'Законодательство': {
+    keywords: ['закон','законопроект','поправк','голосован','парламент','депутат','референдум','легализац','разрешен','запрет','налог','сбор','пошлин'],
+    context: ['прав','юрид','конституц','суд']
+  },
+  'Социальная сфера': {
+    keywords: ['образован','здравоохран','пенси','социальн','льгот','дотаци','субсиди','программ','поддержк','граждан','населен'],
+    context: ['обществен','социум','народ']
+  }
+};
+
+const TONE_SCORES = {
+  positive: {
+    keywords: ['успеш','рост','побед','процвет','рекорд','подпис','достигнут','укреплен','прорыв','развит','улучшен','выгод','позитив','стабильн'],
+    score: 0.15
+  },
+  negative: {
+    keywords: ['кризис','обвал','атак','потери','поражен','катастроф','паден','протест','беспоряд','разрушен','ущерб','жертв','угроз','опасн','конфликт'],
+    score: -0.2
+  }
+};
+
+function detectCountrySmart(text){
+  const low = text.toLowerCase();
+  for(const c of countries){
+    const aliases = ALIASES[c.id] || [c.name.toLowerCase().split(' ')[0]];
+    if(aliases.some(a=>low.includes(a))) return c;
+  }
+  return null;
+}
+function detectCategorySmart(text){
+  const low = text.toLowerCase();
+  let best = 'Политика';
+  let bestScore = 0;
+  for(const [cat, data] of Object.entries(SMART_CATEGORIES)){
+    let score = 0;
+    for(const kw of data.keywords){
+      const matches = (low.match(new RegExp(kw, 'g')) || []).length;
+      score += matches * 2;
+    }
+    for(const ctx of data.context || []){
+      if(low.includes(ctx)) score += 1;
+    }
+    if(score > bestScore){ bestScore = score; best = cat; }
+  }
+  return best;
+}
+function detectToneSmart(text){
+  const low = text.toLowerCase();
+  let positiveScore = 0, negativeScore = 0;
+  for(const w of TONE_SCORES.positive.keywords){
+    positiveScore += (low.match(new RegExp(w, 'g')) || []).length;
+  }
+  for(const w of TONE_SCORES.negative.keywords){
+    negativeScore += (low.match(new RegExp(w, 'g')) || []).length;
+  }
+  const total = positiveScore + negativeScore;
+  if(total === 0) return { tone: 'neutral', score: 0 };
+  const ratio = (positiveScore - negativeScore) / total;
+  if(ratio > 0.25) return { tone: 'positive', score: TONE_SCORES.positive.score * (1 + Math.abs(ratio)) };
+  if(ratio < -0.25) return { tone: 'negative', score: TONE_SCORES.negative.score * (1 + Math.abs(ratio)) };
+  return { tone: 'neutral', score: 0.05 * ratio };
+}
+function extractNumbersSmart(text){
+  const low = text.toLowerCase();
+  const out = {};
+  const gdpPatterns = [
+    /ввп\s*(?:составил|составляет|—)\s*(\d+[.,]?\d*)\s*(?:млрд|миллиард)/i,
+    /ввп\s*(\d+[.,]?\d*)\s*(?:млрд|миллиард)/i,
+    /(\d+[.,]?\d*)\s*млрд\s*(?:долл|\$)\s*ввп/i
+  ];
+  for(const p of gdpPatterns){ const m = low.match(p); if(m){ out.gdp = parseFloat(m[1].replace(',','.')); break; } }
+  const popPatterns = [
+    /населен\w*\s*(?:составляет|—)\s*(\d+[.,]?\d*)\s*(?:млн|миллион)/i,
+    /(\d+[.,]?\d*)\s*млн\s*(?:человек|жител|населен)/i,
+    /проживает\s*(\d+[.,]?\d*)\s*(?:млн|миллион)/i
+  ];
+  for(const p of popPatterns){ const m = low.match(p); if(m){ out.pop = parseFloat(m[1].replace(',','.')); break; } }
+  const armyPatterns = [
+    /арми\w*\s*(?:составляет|—|насчитывает)\s*(\d+[.,]?\d*)\s*(?:тыс|тысяч)/i,
+    /военнослужащ\w*\s*(\d+[.,]?\d*)\s*(?:тыс|тысяч)/i,
+    /личн(?:ый|ого)\s*состав\s*(\d+[.,]?\d*)\s*(?:тыс|тысяч)/i
+  ];
+  for(const p of armyPatterns){ const m = low.match(p); if(m){ out.manpower = parseFloat(m[1].replace(',','.')); break; } }
+  return out;
+}
+function detectWarActionSmart(text){
+  const low = text.toLowerCase();
+  const types = [];
+  const warMap = {
+    offensive: ['наступл','атак','вторж','штурм','прорыв','натиск','удар','бомб','ракет','блицкриг','охват'],
+    defensive: ['оборон','отраж','защит','удерж','контратак','позиц','рубеж','укрепл','редут'],
+    asym: ['партизан','диверс','засад','подрыв','террор','городск','уличн','повстан'],
+    cyber: ['кибер','хак','взлом','сеть','сервер','информ','электрон','рэб','глуш','радио','связь'],
+    air: ['авиа','бомб','дрон','беспилот','воздушн','база','крыло','истребит','бомбардир','парашют']
+  };
+  for(const [type, words] of Object.entries(warMap)){
+    if(words.some(w => low.includes(w))) types.push(type);
+  }
+  return types.length ? types : null;
+}
+function detectSpecificEvent(text){
+  const low = text.toLowerCase();
+  if(low.includes('марихуан') || low.includes('каннабис') || (low.includes('трав') && low.includes('закон')) || low.includes('легализац')){
+    return { type: 'legislation', topic: 'марихуана' };
+  }
+  if(low.includes('выбор') && low.includes('президент')){
+    return { type: 'election', topic: 'президентские выборы' };
+  }
+  return null;
+}
+function isBlockedChannel(channel){
+  if(!channel) return false;
+  return BLOCKLIST.some(b => channel.includes(b) || b.includes(channel));
+}
+
+let suggestions = [];
+function analyzePost(text, channelHint){
+  text = text.trim();
+  if(!text) return null;
+  let country = null;
+  if(channelHint && channelHint!=='auto'){ country = countries.find(c=>c.id===channelHint); }
+  if(!country) country = detectCountrySmart(text);
+  const toneData = detectToneSmart(text);
+  const category = detectCategorySmart(text);
+  const numbers = extractNumbersSmart(text);
+  const warActions = detectWarActionSmart(text);
+  const specific = detectSpecificEvent(text);
+  return { country, category, tone: toneData.tone, toneScore: toneData.score, numbers, text, warActions, specific, channel: channelHint, id: 's'+Math.random().toString(36).slice(2) };
+}
+
+function applyPostEffects(suggestion){
+  const effects = [];
+  if(!suggestion.country) return effects;
+  const c = suggestion.country;
+  const score = suggestion.toneScore || 0;
+  
+  if(suggestion.numbers.gdp){
+    const newGdp = Math.round(suggestion.numbers.gdp);
+    const delta = newGdp - c.gdp;
+    if(Math.abs(delta) > 0.5){ c.gdp = Math.max(1, newGdp); effects.push(`📊 ВВП установлен на ${c.gdp} млрд$`); }
+  } else if(Math.abs(score) > 0.03){
+    const pct = score * 0.06;
+    const delta = Math.round(c.gdp * pct);
+    if(Math.abs(delta) > 0.5){ c.gdp = Math.max(1, c.gdp + delta); effects.push(`📊 ВВП ${delta > 0 ? 'вырос' : 'упал'} на ${Math.abs(delta)} млрд$`); }
+  }
+  if(suggestion.numbers.pop){
+    const newPop = parseFloat(suggestion.numbers.pop);
+    const delta = newPop - c.pop;
+    if(Math.abs(delta) > 0.05){ c.pop = Math.max(0.1, newPop); effects.push(`👥 Население скорректировано до ${c.pop.toFixed(1)} млн`); }
+  }
+  const stabDelta = Math.round(score * 0.6);
+  if(stabDelta !== 0){ c.stability = Math.max(1, Math.min(10, c.stability + stabDelta)); effects.push(`📈 Стабильность ${stabDelta > 0 ? 'выросла' : 'упала'} на ${Math.abs(stabDelta).toFixed(1)}`); }
+  
+  if(suggestion.warActions && suggestion.warActions.length > 0){
+    const warEffects = [];
+    const actions = suggestion.warActions;
+    if(actions.includes('offensive')){
+      const shift = 2 + Math.floor(Math.random() * 6);
+      c.mil.morale = Math.max(30, Math.min(95, c.mil.morale + (suggestion.tone === 'positive' ? shift : -shift/2)));
+      const loss = Math.round(shift * 0.25);
+      c.mil.manpower = Math.max(10, c.mil.manpower - loss);
+      c.mil.organization = Math.max(40, c.mil.organization - 4 - Math.floor(Math.random() * 6));
+      warEffects.push(`⚔️ Наступление: дух ${suggestion.tone === 'positive' ? '+' : '−'}${shift}, потери ${loss} тыс.`);
+    }
+    if(actions.includes('defensive')){
+      const bonus = 2 + Math.floor(Math.random() * 3);
+      c.mil.morale = Math.min(95, c.mil.morale + bonus);
+      c.mil.organization = Math.min(90, c.mil.organization + 3 + Math.floor(Math.random() * 4));
+      warEffects.push(`🛡️ Оборона: дух +${bonus}, орг +${3+Math.floor(Math.random()*4)}`);
+    }
+    if(actions.includes('cyber')){
+      const cyberDmg = 1 + Math.floor(Math.random() * 2);
+      c.mil.logistics = Math.max(1, c.mil.logistics - cyberDmg);
+      warEffects.push(`💻 Кибератака: логистика −${cyberDmg}`);
+    }
+    if(actions.includes('air')){
+      const dmg = 2 + Math.floor(Math.random() * 4);
+      c.mil.manpower = Math.max(10, c.mil.manpower - dmg);
+      c.mil.morale = Math.max(30, c.mil.morale - 2 - Math.floor(Math.random() * 3));
+      c.mil.air = Math.max(0, c.mil.air - 1 - Math.floor(Math.random() * 2));
+      warEffects.push(`✈️ Авиаудар: потери ${dmg} тыс.`);
+    }
+    if(warEffects.length){
+      effects.push('⚔️ ' + warEffects.join('; '));
+      warLog.push({ date: document.getElementById('rpDate').textContent, country: c.name, actions: warEffects, text: suggestion.text.slice(0,200)+'...' });
+      saveWarLog();
+    }
+  }
+  return effects;
+}
+
+function processPosts(posts, hint){
+  let imported=0, blocked=0, skipped=0;
+  posts.forEach(p=>{
+    const s = analyzePost(p, hint);
+    if(s){
+      const isDuplicate = newsFeed.some(n => n.text === s.text && n.channel === s.channel);
+      if(isDuplicate){ skipped++; return; }
+      if(isBlockedChannel(s.channel)){
+        suggestions.unshift({...s, blocked: true});
+        blocked++;
+      } else {
+        suggestions.unshift(s);
+        const effects = applyPostEffects(s);
+        if(effects.length) s.appliedEffects = effects;
+        advanceRpDate(1);
+        newsFeed.unshift({
+          cat: s.category, tone: s.tone,
+          title: `[TG] ${s.category}${s.country ? ': ' + s.country.name : ''}`,
+          text: s.text,
+          date: document.getElementById('rpDate').textContent,
+          ts: Date.now(),
+          channel: s.channel,
+          effect: effects.join('; '),
+          blocked: false
+        });
+        imported++;
+      }
+    }
+  });
+  saveNews(); saveCountries();
+  renderSuggestions(); renderNews(); renderEconStats(); renderEconTable(); populateSelectors();
+  document.getElementById('importStatus').textContent = `✅ Импорт: ${imported} новых, ${blocked} заблокировано, ${skipped} дубликатов`;
+  document.getElementById('lastImportTime').textContent = `Последний: ${new Date().toLocaleString('ru-RU')}`;
+}
+
+function analyzeImportText(){
+  const raw = document.getElementById('importText').value;
+  const hint = document.getElementById('importChannelHint')?.value || 'auto';
+  if(!raw.trim()){ alert('Вставьте текст хотя бы одного поста'); return; }
+  const posts = raw.split(/\n---\n|\n---|---\n|---/).map(p=>p.trim()).filter(Boolean);
+  processPosts(posts, hint);
+}
+
+function handleFileImport(event){
+  const file = event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e=>{
+    try{
+      const data = JSON.parse(e.target.result);
+      if(!Array.isArray(data)) throw new Error('Ожидался массив постов');
+      document.getElementById('importStatus').textContent = `Обработка ${data.length} постов...`;
+      const posts = data.map(item => item.text || '').filter(Boolean);
+      processPosts(posts, 'auto');
+    }catch(err){
+      alert('Ошибка: '+err.message);
+      document.getElementById('importStatus').textContent = '❌ Ошибка: '+err.message;
+    }
+  };
+  reader.readAsText(file);
+}
+
+function renderSuggestions(){
+  document.getElementById('suggCount').textContent = suggestions.length;
+  const el = document.getElementById('suggList');
+  if(suggestions.length===0){ el.innerHTML = '<div class="news-empty">Нет постов.</div>'; return; }
+  el.innerHTML = suggestions.map(s=>`
+    <div class="news-card ${s.blocked?'blocked':''}" data-tag="${s.category}">
+      <div class="news-meta">
+        ${s.country ? 'Страна: '+s.country.name : '<span class="badge bad">Страна не распознана</span>'}
+        &nbsp;·&nbsp; Тон: ${s.tone==='positive'?'позитивный':s.tone==='negative'?'тревожный':'нейтральный'}
+        ${s.channel ? ' · @'+s.channel : ''}
+        ${s.blocked ? ' · <span class="badge bad">ЗАБЛОКИРОВАН</span>' : ''}
+        ${s.warActions ? ' · <span class="badge war">Военные действия</span>' : ''}
+        ${s.specific ? ' · 🎯 '+s.specific.topic : ''}
+      </div>
+      <div class="news-title">${s.category}${s.appliedEffects ? ' ✅ Применено' : ''}</div>
+      <div class="news-body">${s.text}</div>
+      ${s.appliedEffects ? `<div class="news-effect">⚡ ${s.appliedEffects.join('; ')}</div>` : ''}
+    </div>
+  `).join('');
+}
+
+function clearSuggestions(){
+  if(!confirm('Очистить все предложения?')) return;
+  suggestions = [];
+  renderSuggestions();
+}
+
+function manualAutoImport(){
+  document.getElementById('importStatus').textContent = '⏳ Загрузка lours_export.json...';
+  fetch('lours_export.json', {cache:'no-store'})
+    .then(r=>{ if(!r.ok) throw new Error('файл не найден'); return r.json(); })
+    .then(data=>{
+      if(!Array.isArray(data)) throw new Error('неверный формат');
+      const posts = data.map(item => item.text || '').filter(Boolean);
+      processPosts(posts, 'auto');
+    })
+    .catch(err=>{
+      document.getElementById('importStatus').textContent = '⚠️ '+err.message;
+    });
+}
+
+function startAutoImport(){
+  manualAutoImport();
+  if(autoImportInterval) clearInterval(autoImportInterval);
+  autoImportInterval = setInterval(manualAutoImport, 6*60*60*1000);
+  document.getElementById('autoStatus').textContent = '✅ Активен (каждые 6 часов)';
+}
+
+// ============================================================
+// УПРАВЛЕНИЕ РОДАМИ ВОЙСК
+// ============================================================
+function updateBranchCommand(branch){
+  const A = countries.find(c=>c.id===document.getElementById('warA').value);
+  if(!A) return;
+  
+  const commands = {
+    navy: document.getElementById('navyCommand').value,
+    air: document.getElementById('airCommand').value,
+    sbs: document.getElementById('sbsCommand').value,
+    sso: document.getElementById('ssoCommand').value
+  };
+  
+  const statusMap = {
+    navy: { patrol:'Патрулирование', strike:'Ударная группа', blockade:'Блокада', landing:'Десант', defense:'Береговая оборона' },
+    air: { patrol:'Патрулирование', strike:'Ударная авиация', intercept:'Перехват', bombard:'Бомбардировка', recon:'Разведка' },
+    sbs: { recon:'Разведка', sabotage:'Диверсии', assault:'Штурм', defense:'Оборона', evacuation:'Эвакуация' },
+    sso: { recon:'Глубокая разведка', sabotage:'Спецоперации', assault:'Штурм', protection:'Охрана ВИП', extraction:'Эвакуация' }
+  };
+  
+  const statusEl = document.getElementById(branch+'Status');
+  if(statusEl){
+    statusEl.textContent = `🔹 ${statusMap[branch]?.[commands[branch]] || commands[branch]}`;
+    statusEl.style.color = 'var(--brass)';
+  }
+  
+  const statMap = {
+    navy: `⚓ ${A.mil.navy || 0} кораблей`,
+    air: `✈️ ${A.mil.air || 0} самолётов`,
+    sbs: `🎯 ${Math.round(A.mil.manpower * 0.05)} групп`,
+    sso: `💀 ${Math.round(A.mil.manpower * 0.02)} бойцов`
+  };
+  const statEl = document.getElementById(branch+'Stat');
+  if(statEl) statEl.textContent = statMap[branch] || '—';
+}
+
+// ============================================================
+// ГЕНЕРАЦИЯ НАРРАТИВНОГО ОТЧЕТА (БЕЗ ЦИФР, КРОМЕ ПОТЕРЬ)
+// ============================================================
+function generateNarrative(A, B, terrain, climate, phase, navyCmd, airCmd, sbsCmd, ssoCmd, successProb, durationDays, atkLossPct, defLossPct, territoryShift, techDiff, moraleDiff){
+  
+  const terrainDesc = {
+    plains: 'открытой равнинной местности, где видимость достигает нескольких километров',
+    mountains: 'сложной горной местности с узкими ущельями и крутыми склонами, ограничивающими маневр',
+    urban: 'плотной городской застройки, где каждый квартал превращается в крепость',
+    forest: 'густых лесных массивов, скрывающих передвижение войск',
+    island: 'изрезанной береговой линии островного архипелага',
+    desert: 'бескрайних песчаных пространств, где отсутствие воды и тени становится критическим фактором'
+  };
+  
+  const climateDesc = {
+    temperate: 'умеренным климатом, позволяющим вести боевые действия в комфортных условиях',
+    arctic: 'суровыми арктическими условиями: метели, морозы и вечная мерзлота',
+    tropical: 'тропической жарой и влажностью, изматывающей личный состав',
+    arid: 'палящим солнцем и постоянной нехваткой воды'
+  };
+  
+  const phaseDesc = {
+    combined: 'Комбинированная операция, где все рода войск действуют в едином тактическом рисунке. Пехота продвигается под прикрытием артиллерии, а авиация наносит удары по выявленным целям.',
+    offense: 'Стратегическое наступление с массированным применением танковых клиньев. Ударные группы прорывают оборону противника, создавая коридоры для развития успеха.',
+    defense: 'Глубокая эшелонированная оборона с использованием инженерных заграждений, минных полей и подготовленных огневых позиций.',
+    asym: 'Асимметричные действия: диверсионно-разведывательные группы действуют в тылу противника, нарушая коммуникации и нанося точечные удары по ключевым объектам.',
+    cyber: 'Кибервойна: массированные атаки на системы управления, ПВО и логистику противника, создающие хаос в его тылу.',
+    air: 'Тотальное превосходство в воздухе. Авиация подавляет ПВО противника, нанося удары по его укреплениям и резервам.'
+  };
+  
+  const navyActions = {
+    patrol: 'Военно-морские силы осуществляют патрулирование прибрежных вод, контролируя морские коммуникации и предотвращая высадку десантов.',
+    strike: 'Ударные корабельные группы наносят ракетные удары по береговой инфраструктуре и скоплениям войск противника.',
+    blockade: 'Морская блокада перекрывает поставки ресурсов и подкреплений противнику, изолируя его от внешнего мира.',
+    landing: 'Десантные корабли высаживают тактические десанты в тылу противника, создавая угрозу его коммуникациям.',
+    defense: 'Корабли береговой обороны прикрывают побережье, создавая противодесантный рубеж.'
+  };
+  
+  const airActions = {
+    patrol: 'Истребители патрулируют воздушное пространство, перехватывая разведчики и бомбардировщики противника.',
+    strike: 'Штурмовая авиация наносит удары по передовым позициям и колоннам техники противника.',
+    intercept: 'Истребители ПВО перехватывают воздушные цели, прикрывая наземные войска с воздуха.',
+    bombard: 'Стратегические бомбардировщики наносят удары по логистическим узлам, складам и командным пунктам противника.',
+    recon: 'Разведывательная авиация ведет непрерывное наблюдение за перемещениями противника, корректируя огонь артиллерии.'
+  };
+  
+  const sbsActions = {
+    recon: 'Силы береговой обороны ведут разведку прибрежной зоны, вскрывая систему обороны противника.',
+    sabotage: 'Диверсионные группы СБС наносят удары по береговой инфраструктуре и системам связи противника.',
+    assault: 'Морские десантники штурмуют укрепленные позиции противника на побережье.',
+    defense: 'СБС занимают оборону на ключевых рубежах, прикрывая побережье.',
+    evacuation: 'Силы СБС обеспечивают эвакуацию подразделений с угрожаемых направлений.'
+  };
+  
+  const ssoActions = {
+    recon: 'Спецназ ведет глубокую разведку в тылу противника, вскрывая его уязвимости и систему управления.',
+    sabotage: 'Группы ССО наносят удары по командным пунктам, узлам связи и складам боеприпасов противника.',
+    assault: 'Спецназ штурмует ключевые объекты: штабы, узлы связи и системы ПВО противника.',
+    protection: 'ССО обеспечивают безопасность командования и ключевых объектов.',
+    extraction: 'Спецназ эвакуирует ценные кадры и документацию из тыла противника.'
+  };
+  
+  // Определяем результат операции
+  let outcome = '';
+  let losses = '';
+  let territoryNarrative = '';
+  
+  if(successProb >= 65){
+    outcome = `Наступательная операция развивается успешно. ${A.name} добивается значительных успехов, прорывая оборону противника и развивая наступление вглубь его территории. Личный состав противника деморализован, его подразделения несут серьезные потери и отступают в беспорядке. Командование ${A.name} заявляет о достижении поставленных целей первого этапа операции.`;
+    territoryNarrative = `Контролируемая территория расширяется: подразделения ${A.name} продвинулись вглубь обороны противника, заняв выгодные рубежи и создав плацдарм для дальнейшего наступления.`;
+  } else if(successProb >= 45){
+    outcome = `На фронте установилось паритетное противостояние. Обе стороны ведут позиционные бои, не имея явного преимущества. ${A.name} пытается продавить оборону, но ${B.name} упорно удерживает свои позиции, перебрасывая резервы на угрожаемые направления. Ситуация напоминает затяжную войну на истощение.`;
+    territoryNarrative = `Линия фронта практически не изменилась. Отдельные участки переходят из рук в руки, но значительного продвижения ни одна из сторон не достигает.`;
+  } else {
+    outcome = `Оборона ${B.name} оказалась неприступной. ${A.name} несет серьезные потери в живой силе и технике, не сумев прорвать оборонительные рубежи. Подразделения ${A.name} вынуждены отойти на исходные позиции для перегруппировки и восполнения потерь.`;
+    territoryNarrative = `Контролируемая территория остается неизменной. ${B.name} удерживает свои позиции, отразив все атаки противника.`;
+  }
+  
+  // Описание потерь (только здесь цифры)
+  losses = `Потери ${A.name} составили ${atkLossPct}% от задействованной группировки. ${B.name} потерял ${defLossPct}% своих сил.`;
+  
+  // Технологическое превосходство
+  let techNarrative = '';
+  if(techDiff > 0){
+    techNarrative = `Техническое превосходство ${A.name} позволяет его войскам эффективно подавлять системы управления и ПВО противника, обеспечивая свободу маневра и огневого поражения.`;
+  } else if(techDiff < 0){
+    techNarrative = `Техническое превосходство ${B.name} осложняет наступательные действия ${A.name}. Системы РЭБ и ПВО противника наносят серьезный урон атакующим подразделениям.`;
+  } else {
+    techNarrative = `Технический паритет сторон означает, что исход операции будет решаться мастерством командиров и выучкой личного состава, а не превосходством вооружений.`;
+  }
+  
+  // Моральный дух
+  let moraleNarrative = '';
+  if(moraleDiff > 0){
+    moraleNarrative = `Личный состав ${A.name} демонстрирует высокий боевой дух: солдаты уверены в успехе и готовы выполнять поставленные задачи любой ценой.`;
+  } else if(moraleDiff < 0){
+    moraleNarrative = `Войска ${B.name} сражаются с исключительным упорством, понимая, что от результата обороны зависят судьбы их страны. Боевой дух защитников подкреплен успешными действиями по отражению атак.`;
+  } else {
+    moraleNarrative = `Боевой дух обеих сторон находится на высоком уровне. Солдаты верят в победу и готовы нести потери ради достижения целей.`;
+  }
+  
+  // Действия родов войск
+  const navyNarrative = `⚓ ВМФ ${A.name}: ${navyActions[navyCmd] || 'Выполняет поставленные задачи'}`;
+  const airNarrative = `✈️ ВВС ${A.name}: ${airActions[airCmd] || 'Выполняет поставленные задачи'}`;
+  const sbsNarrative = `🌊 СБС ${A.name}: ${sbsActions[sbsCmd] || 'Выполняет поставленные задачи'}`;
+  const ssoNarrative = `🔱 ССО ${A.name}: ${ssoActions[ssoCmd] || 'Выполняет поставленные задачи'}`;
+  
+  // Длительность
+  let durationNarrative = '';
+  if(durationDays < 10){
+    durationNarrative = `Активная фаза операции, по оценкам командования, продлится около ${durationDays} дней. Ожидаются стремительные маневры и быстрые изменения оперативной обстановки.`;
+  } else if(durationDays < 30){
+    durationNarrative = `Операция приобретает затяжной характер: прогнозируемая длительность составляет ${durationDays} дней. Войска готовятся к длительному противостоянию с противником.`;
+  } else {
+    durationNarrative = `Конфликт переходит в фазу затяжной войны на истощение. По оценкам штаба, операция может продлиться до ${durationDays} дней, требуя огромных ресурсов и колоссального напряжения сил.`;
+  }
+  
+  // Территория
+  let shiftNarrative = '';
+  if(territoryShift > 20){
+    shiftNarrative = `Линия фронта сместилась в пользу ${A.name}: освобождено до ${territoryShift}% спорной территории. Противник оставляет укрепленные районы, отходя на заранее подготовленные оборонительные рубежи.`;
+  } else if(territoryShift > 5){
+    shiftNarrative = `Отмечены незначительные изменения линии фронта: ${A.name} удалось закрепиться на плацдарме шириной до ${territoryShift}% от спорной территории.`;
+  } else {
+    shiftNarrative = `Линия фронта остается стабильной. Существенных территориальных изменений не зафиксировано.`;
+  }
+  
+  // Собираем полный отчет
+  return `
+    ${outcome}
+
+    ${losses}
+
+    ${techNarrative}
+
+    ${moraleNarrative}
+
+    ${durationNarrative}
+
+    ${shiftNarrative}
+
+    РОДЫ ВОЙСК В ДЕЙСТВИИ:
+    ${navyNarrative}
+    ${airNarrative}
+    ${sbsNarrative}
+    ${ssoNarrative}
+
+    ТЕАТР ВОЕННЫХ ДЕЙСТВИЙ:
+    Боевые действия развернулись на ${terrainDesc[terrain] || terrain}. Климатические условия характеризуются ${climateDesc[climate] || climate}, что оказывает существенное влияние на тактику и логистику сторон.
+  `;
+}
+
+// ============================================================
+// ГЕНЕРАЦИЯ SVG КАРТЫ БОЕВЫХ ДЕЙСТВИЙ
+// ============================================================
+function generateBattleMap(A, B, terrain, phase, successProb){
+  const width = 800, height = 400;
+  const colors = {
+    attacker: '#a8462c',
+    defender: '#3f7268',
+    frontline: '#c9a227',
+    arrow: '#d1602f'
+  };
+  
+  let svg = `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg" style="background:var(--bg2);">`;
+  svg += `<rect width="${width}" height="${height}" fill="#0e1512" stroke="var(--line)" stroke-width="1"/>`;
+  
+  for(let i=0; i<10; i++){
+    svg += `<line x1="${i*80}" y1="0" x2="${i*80}" y2="${height}" stroke="var(--line-soft)" stroke-width="0.5" opacity="0.3"/>`;
+    svg += `<line x1="0" y1="${i*40}" x2="${width}" y2="${i*40}" stroke="var(--line-soft)" stroke-width="0.5" opacity="0.3"/>`;
+  }
+  
+  const frontX = 300 + (50 - successProb/2);
+  const frontY = 200;
+  
+  svg += `<rect x="20" y="30" width="${frontX-40}" height="${height-60}" fill="${colors.attacker}" opacity="0.15" rx="8"/>`;
+  svg += `<text x="50" y="60" fill="${colors.attacker}" font-size="16" font-family="Spectral,serif" font-weight="600">${A.name}</text>`;
+  svg += `<text x="50" y="80" fill="var(--ink-dim)" font-size="11" font-family="monospace">⚔️ ${A.mil.manpower} тыс. чел</text>`;
+  
+  svg += `<rect x="${frontX+20}" y="30" width="${width-frontX-40}" height="${height-60}" fill="${colors.defender}" opacity="0.15" rx="8"/>`;
+  svg += `<text x="${width-50}" y="60" fill="${colors.defender}" font-size="16" font-family="Spectral,serif" font-weight="600" text-anchor="end">${B.name}</text>`;
+  svg += `<text x="${width-50}" y="80" fill="var(--ink-dim)" font-size="11" font-family="monospace" text-anchor="end">🛡️ ${B.mil.manpower} тыс. чел</text>`;
+  
+  svg += `<line x1="${frontX}" y1="30" x2="${frontX}" y2="${height-30}" stroke="${colors.frontline}" stroke-width="3" stroke-dasharray="8,4"/>`;
+  svg += `<text x="${frontX}" y="${height-10}" fill="${colors.frontline}" font-size="10" font-family="monospace" text-anchor="middle">ЛИНИЯ ФРОНТА</text>`;
+  
+  const arrowY = height/2;
+  if(successProb > 50){
+    const arrowLen = Math.min(150, successProb * 1.5);
+    svg += `<polygon points="${frontX+10},${arrowY-20} ${frontX+arrowLen},${arrowY} ${frontX+10},${arrowY+20}" fill="${colors.arrow}" opacity="0.7"/>`;
+    svg += `<text x="${frontX+arrowLen/2}" y="${arrowY-25}" fill="${colors.arrow}" font-size="12" font-family="monospace" text-anchor="middle">⬆ НАСТУПЛЕНИЕ</text>`;
+  } else if(successProb < 30){
+    const arrowLen = Math.min(150, (50-successProb) * 1.5);
+    svg += `<polygon points="${frontX-10},${arrowY-20} ${frontX-arrowLen},${arrowY} ${frontX-10},${arrowY+20}" fill="${colors.defender}" opacity="0.7"/>`;
+    svg += `<text x="${frontX-arrowLen/2}" y="${arrowY-25}" fill="${colors.defender}" font-size="12" font-family="monospace" text-anchor="middle">⬆ КОНТРАТАКА</text>`;
+  } else {
+    svg += `<text x="${width/2}" y="${arrowY-30}" fill="var(--brass-dim)" font-size="14" font-family="monospace" text-anchor="middle">⚔ ПОЗИЦИОННАЯ ВОЙНА</text>`;
+  }
+  
+  const phaseLabels = {
+    combined: '🔱 КОМБИНИРОВАННАЯ',
+    offense: '⚔ НАСТУПЛЕНИЕ',
+    defense: '🛡 ОБОРОНА',
+    asym: '🎯 АСИММЕТРИЯ',
+    cyber: '💻 КИБЕРВОЙНА',
+    air: '✈ ВОЗДУШНАЯ'
+  };
+  svg += `<rect x="${width/2-120}" y="10" width="240" height="28" fill="var(--panel)" stroke="var(--line)" rx="4"/>`;
+  svg += `<text x="${width/2}" y="29" fill="var(--brass)" font-size="12" font-family="monospace" font-weight="bold" text-anchor="middle">${phaseLabels[phase] || phase.toUpperCase()}</text>`;
+  
+  svg += `<rect x="20" y="${height-80}" width="${width-40}" height="60" fill="var(--panel)" stroke="var(--line)" rx="4"/>`;
+  svg += `<text x="40" y="${height-55}" fill="var(--ink-dim)" font-size="10" font-family="monospace">⚓ ВМФ: ${document.getElementById('navyCommand').options[document.getElementById('navyCommand').selectedIndex]?.text || '—'}</text>`;
+  svg += `<text x="240" y="${height-55}" fill="var(--ink-dim)" font-size="10" font-family="monospace">✈ ВВС: ${document.getElementById('airCommand').options[document.getElementById('airCommand').selectedIndex]?.text || '—'}</text>`;
+  svg += `<text x="440" y="${height-55}" fill="var(--ink-dim)" font-size="10" font-family="monospace">🌊 СБС: ${document.getElementById('sbsCommand').options[document.getElementById('sbsCommand').selectedIndex]?.text || '—'}</text>`;
+  svg += `<text x="640" y="${height-55}" fill="var(--ink-dim)" font-size="10" font-family="monospace">🔱 ССО: ${document.getElementById('ssoCommand').options[document.getElementById('ssoCommand').selectedIndex]?.text || '—'}</text>`;
+  
+  const terrainLabels = {plains:'🌾 Равнина', mountains:'⛰ Горы', urban:'🏙 Город', forest:'🌲 Лес', island:'🏝 Остров', desert:'🏜 Пустыня'};
+  const climateLabels = {temperate:'🌤 Умеренный', arctic:'❄ Арктический', tropical:'🌴 Тропический', arid:'☀ Засушливый'};
+  svg += `<text x="40" y="${height-35}" fill="var(--ink-faint)" font-size="9" font-family="monospace">${terrainLabels[terrain] || terrain} · ${climateLabels[document.getElementById('warClimate').value] || ''}</text>`;
+  
+  svg += `</svg>`;
+  return svg;
+}
+
+// ============================================================
+// ВОЕННЫЙ СИМУЛЯТОР
+// ============================================================
+function combatPower(c){
+  const m = c.mil;
+  return m.manpower * (1 + m.tech/10) * (1 + m.air/10) * (1 + m.navy/10) * (1 + m.logistics/10) * (1 + m.morale/100) * (1 + m.organization/100) * (1 + m.equipment/100);
+}
+
+function runWarSim(){
+  const A = countries.find(c=>c.id===document.getElementById('warA').value);
+  const B = countries.find(c=>c.id===document.getElementById('warB').value);
+  if(!A || !B || A.id===B.id){ alert('Выберите две разные стороны'); return; }
+  
+  updateBranchCommand('navy');
+  updateBranchCommand('air');
+  updateBranchCommand('sbs');
+  updateBranchCommand('sso');
+  
+  const terrain = document.getElementById('warTerrain').value;
+  const climate = document.getElementById('warClimate').value;
+  const distance = parseInt(document.getElementById('warDistance').value,10);
+  
+  let phase = 'combined';
+  const activeBtn = document.querySelector('.phase-btn.active');
+  if(activeBtn) phase = activeBtn.dataset.phase;
+  
+  const navyCmd = document.getElementById('navyCommand').value;
+  const airCmd = document.getElementById('airCommand').value;
+  const sbsCmd = document.getElementById('sbsCommand').value;
+  const ssoCmd = document.getElementById('ssoCommand').value;
+  
+  let atkPower = combatPower(A);
+  let defPower = combatPower(B);
+  
+  const climateMod = CLIMATE_PENALTY[climate] || 1;
+  const terrainMod = DEFENSE_BONUS[terrain] || 1;
+  const logisticsMod = 1 - (distance/100) * 0.3 * (1 - A.mil.logistics/10);
+  
+  atkPower *= climateMod * Math.max(0.35, logisticsMod);
+  defPower *= terrainMod;
+  
+  let atkMod = 1, defMod = 1, airSupMod = 1, cyberMod = 1, widthMod = 1;
+  
+  switch(phase){
+    case 'offense': atkMod = 1.4; defMod = 0.85; widthMod = 1.2; break;
+    case 'defense': atkMod = 0.75; defMod = 1.5; widthMod = 0.7; break;
+    case 'asym': atkMod = 0.55; defMod = 0.75; widthMod = 0.5; break;
+    case 'cyber': atkMod = 1.15; defMod = 0.65; cyberMod = 0.7; break;
+    case 'air': atkMod = 1.5; defMod = 0.75; airSupMod = 1.3; break;
+    default: atkMod = 1.1; defMod = 1.1; widthMod = 1.0; break;
+  }
+  
+  const navyMods = { patrol:1.0, strike:1.2, blockade:0.9, landing:1.3, defense:1.1 };
+  const airMods = { patrol:1.0, strike:1.3, intercept:1.1, bombard:1.4, recon:0.9 };
+  const sbsMods = { recon:1.0, sabotage:1.2, assault:1.3, defense:1.1, evacuation:0.8 };
+  const ssoMods = { recon:1.1, sabotage:1.3, assault:1.4, protection:1.0, extraction:0.9 };
+  
+  atkPower *= (navyMods[navyCmd] || 1) * (airMods[airCmd] || 1) * (sbsMods[sbsCmd] || 1) * (ssoMods[ssoCmd] || 1);
+  defPower *= 1.05;
+  
+  atkPower *= atkMod * airSupMod * cyberMod * widthMod;
+  defPower *= defMod;
+  
+  const techDiff = A.mil.tech - B.mil.tech;
+  if(techDiff > 0) atkPower *= (1 + techDiff * 0.03);
+  else if(techDiff < 0) defPower *= (1 + Math.abs(techDiff) * 0.03);
+  
+  const moraleDiff = A.mil.morale - B.mil.morale;
+  if(moraleDiff > 0) atkPower *= (1 + moraleDiff/200);
+  else if(moraleDiff < 0) defPower *= (1 + Math.abs(moraleDiff)/200);
+  
+  const ratio = atkPower/defPower;
+  const successProb = Math.round((ratio/(ratio+1))*100);
+  const durationDays = Math.max(3, Math.round(60/Math.log(ratio+1.2)));
+  
+  const baseLoss = Math.min(A.mil.manpower, B.mil.manpower) * 0.005;
+  let atkLossPct = Math.max(2, Math.min(45, Math.round((1/ratio) * baseLoss * 5)));
+  let defLossPct = Math.max(2, Math.min(50, Math.round(ratio * baseLoss * 5)));
+  const territoryShift = Math.max(0, Math.min(100, Math.round((successProb-40)*1.2)));
+  
+  // Генерация SVG карты
+  const battleSVG = generateBattleMap(A, B, terrain, phase, successProb);
+  document.getElementById('battleMapContainer').innerHTML = `
+    <div class="battle-map">
+      <div style="font-family:'Spectral SC',serif; font-size:14px; color:var(--brass); margin-bottom:8px;">🗺 КАРТА БОЕВЫХ ДЕЙСТВИЙ</div>
+      ${battleSVG}
+    </div>
+  `;
+  
+  // Генерация нарративного отчета (БЕЗ ЦИФР, КРОМЕ ПОТЕРЬ)
+  const narrative = generateNarrative(
+    A, B, terrain, climate, phase,
+    navyCmd, airCmd, sbsCmd, ssoCmd,
+    successProb, durationDays, atkLossPct, defLossPct,
+    territoryShift, techDiff, moraleDiff
+  );
+  
+  // Заголовок
+  let headline = '';
+  if(successProb >= 65) headline = `🔴 ${A.name}: стратегическая инициатива перехвачена`;
+  else if(successProb >= 45) headline = `🟡 ${A.name} и ${B.name}: позиционное противостояние`;
+  else headline = `🟢 ${B.name}: оборона удерживается`;
+
+  document.getElementById('warResult').innerHTML = `
+    <div class="result-box">
+      <div class="result-headline">${headline}</div>
+      <div class="result-narrative">${narrative}</div>
+      
+      <div class="vs-block" style="margin-top:18px;">
+        <div class="vs-side attacker">
+          <div class="mono" style="font-size:11px;color:var(--ink-dim);">Эфф. мощь ${A.name}</div>
+          <div class="bar-track"><div class="bar-fill" style="width:${Math.min(100, (atkPower/(atkPower+defPower))*100)}%"></div></div>
+          <div style="display:flex; gap:6px; margin-top:4px; flex-wrap:wrap;">
+            <span class="badge navy">⚓ ${A.mil.navy}</span>
+            <span class="badge air">✈ ${A.mil.air}</span>
+            <span class="badge sbs">🌊 ${Math.round(A.mil.manpower*0.05)}</span>
+            <span class="badge sso">🔱 ${Math.round(A.mil.manpower*0.02)}</span>
+          </div>
+        </div>
+        <div class="vs-side defender">
+          <div class="mono" style="font-size:11px;color:var(--ink-dim);">Эфф. мощь ${B.name}</div>
+          <div class="bar-track"><div class="bar-fill def" style="width:${Math.min(100, (defPower/(atkPower+defPower))*100)}%"></div></div>
+          <div style="display:flex; gap:6px; margin-top:4px; flex-wrap:wrap;">
+            <span class="badge navy">⚓ ${B.mil.navy}</span>
+            <span class="badge air">✈ ${B.mil.air}</span>
+            <span class="badge sbs">🌊 ${Math.round(B.mil.manpower*0.05)}</span>
+            <span class="badge sso">🔱 ${Math.round(B.mil.manpower*0.02)}</span>
+          </div>
+        </div>
+      </div>
+      
+      ${warLog.length > 0 ? `
+        <div class="operation-log">
+          <div style="font-size:11px;color:var(--brass-dim);margin-bottom:6px;">📋 Журнал военных действий</div>
+          ${warLog.slice(-5).reverse().map(log => `
+            <div class="log-entry"><span class="time">${log.date}</span> <span class="narrative">${log.country}: ${log.actions.join('; ')}</span></div>
+          `).join('')}
+        </div>
+      ` : ''}
+    </div>
+  `;
+}
+
+// ============================================================
+// КАРТЫ
+// ============================================================
+const MAP_FILES = {politika:'karta_politika.jpg', relief:'karta_relief.jpg', klimat:'karta_klimat.jpg'};
+const MAP_CAPTIONS = {
+  politika:'Политическая карта: границы государств и фракций мира Lours.',
+  relief:'Карта рельефа: шкала высот от уровня моря до горных массивов.',
+  klimat:'Карта климата и растительности.'
+};
+document.querySelectorAll('.map-tab-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.map-tab-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    const key = btn.dataset.map;
+    if(key==='compare'){
+      document.getElementById('mapSingle').style.display='none';
+      document.getElementById('mapCompare').style.display='block';
+      document.getElementById('mapCaption').textContent = 'Слайдер сравнения слоёв карты.';
+    } else {
+      document.getElementById('mapSingle').style.display='block';
+      document.getElementById('mapCompare').style.display='none';
+      document.getElementById('mapImg').src = MAP_FILES[key];
+      document.getElementById('mapCaption').textContent = MAP_CAPTIONS[key];
+    }
+  });
+});
+function updateCompare(){
+  const v = document.getElementById('compareSlider').value;
+  document.getElementById('compareLayer').style.width = v+'%';
+}
+function updateCompareLayers(){
+  const top = document.getElementById('compareTop').value;
+  const bottom = document.getElementById('compareBottom').value;
+  document.querySelector('#mapCompare img.base').src = bottom;
+  document.querySelector('#compareLayer img').src = top;
+}
+
+// ============================================================
+// ПОРТАЛ
+// ============================================================
+function renderPortalLinks(){
+  const el = document.getElementById('linksCountries');
+  el.innerHTML = countries.filter(c=>c.tg).map(c=>`
+    <div class="link-item"><a href="https://t.me/${c.tg}" target="_blank">${c.name}</a></div>
+  `).join('');
+}
+
+// ============================================================
+// ИНИЦИАЛИЗАЦИЯ
+// ============================================================
+function initAll(){
+  populateSelectors();
+  renderEconStats();
+  renderEconTable();
+  renderNews();
+  renderPortalLinks();
+  renderSuggestions();
+  updateCompareLayers();
+  startAutoImport();
+  
+  ['navy','air','sbs','sso'].forEach(b => updateBranchCommand(b));
+}
+
+initAll();
+</script>
+</body>
+</html>
