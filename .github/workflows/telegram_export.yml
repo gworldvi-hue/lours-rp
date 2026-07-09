@@ -1,10 +1,9 @@
-name: Telegram Export
+name: Telegram Export (public only)
 
 on:
   schedule:
-    # каждые 6 часов (время UTC)
     - cron: "0 */6 * * *"
-  workflow_dispatch: {}   # позволяет запускать вручную кнопкой Run workflow
+  workflow_dispatch: {}
 
 permissions:
   contents: write
@@ -21,20 +20,13 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install dependencies
-        run: pip install telethon
-
       - name: Run Telegram export
-        env:
-          TELEGRAM_API_ID: ${{ secrets.TELEGRAM_API_ID }}
-          TELEGRAM_API_HASH: ${{ secrets.TELEGRAM_API_HASH }}
-          TELEGRAM_SESSION: ${{ secrets.TELEGRAM_SESSION }}
-        run: python telegram_export_full.py
+        run: python telegram_export_public.py
 
       - name: Commit updated export if changed
         run: |
-          git config user.name "lours-rp-bot"
+          git config user.name "lours-rp-actions"
           git config user.email "actions@users.noreply.github.com"
           git add lours_export.json
-          git diff --quiet --cached || git commit -m "Автообновление выгрузки Telegram"
+          git diff --staged --quiet || git commit -m "Auto-update lours_export.json [skip ci]"
           git push
