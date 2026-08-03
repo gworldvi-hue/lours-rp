@@ -743,21 +743,29 @@ footer{border-top:1px solid var(--line); padding:24px 32px; text-align:center; c
       <div class="row">
         <div class="field">
           <label>Выберите кампанию</label>
-          <select id="campaignSelect"></select>
+          <select id="campaignSelect" onchange="renderCampaignOpContext()"></select>
         </div>
         <div class="field">
           <label>Наступающая сторона</label>
-          <select id="campaignAttacker">
+          <select id="campaignAttacker" onchange="renderCampaignOpContext()">
             <option value="sideA">Сторона A</option>
             <option value="sideB">Сторона B</option>
           </select>
         </div>
       </div>
-      
+
+      <div id="campaignOpContext" style="margin-bottom:14px;"></div>
+
       <div class="row">
+        <div class="field">
+          <label>Участок фронта / сектор</label>
+          <input type="text" id="campaignSector" placeholder="Например: Северный сектор" value="Основной участок" list="campaignSectorList" oninput="renderCampaignOpContext()">
+          <datalist id="campaignSectorList"></datalist>
+        </div>
         <div class="field">
           <label>Тип операции</label>
           <select id="campaignOpType">
+            <option value="raid">Рейд / вылазка (малый вклад)</option>
             <option value="offensive">Наступательная</option>
             <option value="defensive">Оборонительная</option>
             <option value="maneuver">Маневренная</option>
@@ -766,8 +774,12 @@ footer{border-top:1px solid var(--line); padding:24px 32px; text-align:center; c
             <option value="guerrilla">Партизанская</option>
             <option value="cyber">Кибервойна</option>
             <option value="combined">Комбинированная</option>
+            <option value="general_offensive">Полномасштабное наступление (большой вклад)</option>
           </select>
         </div>
+      </div>
+
+      <div class="row">
         <div class="field">
           <label>Рельеф ТВД</label>
           <select id="campaignTerrain">
@@ -829,6 +841,16 @@ footer{border-top:1px solid var(--line); padding:24px 32px; text-align:center; c
             <option value="none">Отсутствует</option>
           </select>
         </div>
+        <div class="field">
+          <label>Поддержка населения наступающего</label>
+          <select id="campaignPopulationSupport">
+            <option value="full">Полная</option>
+            <option value="high">Высокая</option>
+            <option value="moderate">Средняя</option>
+            <option value="low">Низкая</option>
+            <option value="hostile">Враждебная</option>
+          </select>
+        </div>
       </div>
 
       <div class="row">
@@ -853,44 +875,8 @@ footer{border-top:1px solid var(--line); padding:24px 32px; text-align:center; c
         </div>
       </div>
 
-      <div class="row">
-        <div class="field">
-          <label>Состояние логистики наступающего</label>
-          <select id="campaignLogistics">
-            <option value="excellent">Отличное</option>
-            <option value="good">Хорошее</option>
-            <option value="moderate">Среднее</option>
-            <option value="poor">Плохое</option>
-            <option value="critical">Критическое</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>Моральный дух наступающего</label>
-          <select id="campaignMorale">
-            <option value="high">Высокий</option>
-            <option value="moderate">Средний</option>
-            <option value="low">Низкий</option>
-            <option value="critical">Критический</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>Поддержка населения наступающего</label>
-          <select id="campaignPopulationSupport">
-            <option value="full">Полная</option>
-            <option value="high">Высокая</option>
-            <option value="moderate">Средняя</option>
-            <option value="low">Низкая</option>
-            <option value="hostile">Враждебная</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="row">
-        <div class="field">
-          <label>Удалённость от баз снабжения</label>
-          <input type="range" id="campaignDistance" min="0" max="100" value="50" oninput="document.getElementById('campaignDistVal').textContent=this.value+'%'">
-          <span id="campaignDistVal" class="mono">50%</span>
-        </div>
+      <div style="font-size:11px; color:var(--ink-faint); margin:4px 0 14px;">
+        ⓘ Логистика, мораль наступающего и удалённость от баз снабжения больше не выбираются вручную — они автоматически вычисляются по ходу кампании (см. «Текущую обстановку» выше) на основе накопленных успехов/провалов и глубины продвижения.
       </div>
 
       <!-- РОДА ВОЙСК ДЛЯ КАМПАНИИ -->
@@ -2257,10 +2243,13 @@ function renderCampaigns(){
     
     const campSel = document.getElementById('campaignSelect');
     if(campSel){
+        const prevValue = campSel.value;
         const activeCampaigns = campaigns.filter(c => c.status === 'active' || c.status === 'active_defender');
         campSel.innerHTML = '<option value="">— выберите кампанию —</option>' + 
             activeCampaigns.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+        if(activeCampaigns.some(c => c.id === prevValue)) campSel.value = prevValue;
     }
+    renderCampaignOpContext();
 }
 
 function renderCampaignCard(c){
@@ -2292,18 +2281,32 @@ function renderCampaignCard(c){
             return `
                 <div class="operation-item">
                     <div class="op-header">
-                        <span>${idx+1}. ${op.type} — ${op.date || 'дата неизвестна'}</span>
+                        <span>${idx+1}. [${op.sector || DEFAULT_SECTOR_NAME}] ${op.type} — ${op.date || 'дата неизвестна'}</span>
                         <span class="op-result ${resultClass}">${resultLabels[resultClass] || 'В процессе'}</span>
                     </div>
                     <div class="op-sides">⚔️ ${op.attacker || '?'} наступает на ${op.defender || '?'}</div>
                     <div>${op.description || 'Описание отсутствует'}</div>
                     ${op.aiSummary ? `<div style="font-size:12px;color:var(--ink-faint);margin-top:4px;">🧠 ${op.aiSummary}</div>` : ''}
+                    ${op.frontLine ? `<div style="font-size:11px;color:var(--brass-dim);margin-top:2px;">📍 Линия фронта: ${op.frontLine}</div>` : ''}
                     ${op.casualties ? `<div style="font-size:11px;color:var(--teal);margin-top:2px;">Потери: ${op.casualties}</div>` : ''}
+                    ${op.specialEvent ? `<div style="font-size:11px;color:var(--rust-bright);margin-top:2px;">⚡ Непредвиденное: ${op.specialEvent}</div>` : ''}
                 </div>
             `;
         }).join('');
     } else {
         operationsHTML = '<div class="operation-item" style="color:var(--ink-faint);">Операции ещё не добавлены</div>';
+    }
+    
+    let sectorsHTML = '';
+    if(c.state && c.state.sectors && Object.keys(c.state.sectors).length > 0){
+        sectorsHTML = `<div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;">` +
+            Object.entries(c.state.sectors).map(([name, sec]) => `
+                <div style="font-size:11px; color:var(--ink-dim); border:1px solid var(--line); padding:6px 10px; border-radius:4px;">
+                    <b style="color:var(--brass);">${name}</b>${sec.culmination ? ' ⚠️' : ''}<br>
+                    ${sec.frontLine}<br>
+                    Логистика ${Math.round(sec.atkLogistics)} · Мораль ${Math.round(sec.atkMorale)} · Удалённость ${Math.round(sec.distance)}%
+                </div>
+            `).join('') + `</div>`;
     }
     
     const isActive = c.status === 'active' || c.status === 'active_defender';
@@ -2333,6 +2336,7 @@ function renderCampaignCard(c){
                 <span>Операций: ${c.operations?.length || 0}</span>
                 <span>${c.status === 'completed' ? '🏆 Наступающий одержал победу' : c.status === 'defender_win' ? '🛡️ Обороняющийся одержал победу' : '⏳ В процессе'}</span>
             </div>
+            ${sectorsHTML}
             <div style="margin-top:10px;">
                 ${c.aiSummary ? `<div style="font-size:13px;color:var(--ink-dim);border-top:1px solid var(--line);padding-top:8px;">🧠 ${c.aiSummary}</div>` : ''}
                 ${c.operations && c.operations.length > 0 ? operationsHTML : ''}
@@ -2345,6 +2349,65 @@ function renderCampaignCard(c){
             ` : ''}
         </div>
     `;
+}
+
+/* =====================================================================
+   КАМПАНИИ — ВЕС ТИПОВ ОПЕРАЦИЙ (п.5: не все операции равны)
+   ===================================================================== */
+const OPERATION_WEIGHTS = {
+    raid:              { success: 4,  failure: 6,  stalemate: 2 },
+    guerrilla:         { success: 5,  failure: 7,  stalemate: 2 },
+    cyber:             { success: 6,  failure: 8,  stalemate: 3 },
+    defensive:         { success: 8,  failure: 11, stalemate: 4 },
+    siege:             { success: 8,  failure: 10, stalemate: 5 },
+    maneuver:          { success: 9,  failure: 12, stalemate: 4 },
+    offensive:         { success: 10, failure: 14, stalemate: 5 },
+    amphibious:        { success: 11, failure: 16, stalemate: 6 },
+    combined:          { success: 12, failure: 16, stalemate: 6 },
+    general_offensive: { success: 18, failure: 22, stalemate: 8 }
+};
+const DEFAULT_SECTOR_NAME = 'Основной участок';
+
+function freshSectorState(){
+    return {
+        distance: 20,          // удалённость от баз снабжения, % (п.3 — растёт по ходу наступления)
+        atkLogistics: 100,     // логистика наступающего, 0-100 (производная величина, п.1 второго списка)
+        atkMorale: 60,         // мораль наступающего, 0-100 (производная величина)
+        consecutiveSuccesses: 0,
+        opsSincePause: 0,
+        culmination: false,    // точка кульминации / оперативная пауза (п.4)
+        frontLine: 'Исходные позиции сторон не изменены',
+        history: []            // краткая память последних событий сектора (п.2)
+    };
+}
+
+function getCampaignSector(campaign, sectorName){
+    if(!campaign.state) campaign.state = { sectors: {} };
+    if(!campaign.state.sectors) campaign.state.sectors = {};
+    const key = (sectorName || DEFAULT_SECTOR_NAME).trim() || DEFAULT_SECTOR_NAME;
+    if(!campaign.state.sectors[key]) campaign.state.sectors[key] = freshSectorState();
+    return campaign.state.sectors[key];
+}
+
+function bucketLabel(value, buckets){
+    // buckets: array of [threshold, label], sorted descending by threshold
+    for(const [th, label] of buckets){ if(value >= th) return label; }
+    return buckets[buckets.length-1][1];
+}
+const LOGISTICS_BUCKETS = [[80,'отличное'],[60,'хорошее'],[40,'среднее'],[20,'плохое'],[0,'критическое']];
+const MORALE_BUCKETS = [[75,'высокий'],[50,'средний'],[25,'низкий'],[0,'критический']];
+
+// Подсказка для ИИ о возможном непредвиденном событии (п.6 — не таблица с фиксированным списком,
+// а причинно обусловленная подсказка исходя из текущей обстановки; ИИ сам решает, уместно ли это)
+function buildRandomEventHint(sec){
+    const chance = 0.15 + (sec.distance > 60 ? 0.1 : 0) + (sec.atkLogistics < 40 ? 0.1 : 0) + (sec.atkMorale < 35 ? 0.1 : 0);
+    if(Math.random() >= chance) return null;
+    const causes = [];
+    if(sec.distance > 55) causes.push('растянутые коммуникации — возможен удар/засада по колонне снабжения');
+    if(sec.atkLogistics < 45) causes.push('перебои со снабжением — возможен дефицит боеприпасов/топлива в разгар операции');
+    if(sec.atkMorale < 40) causes.push('низкая мораль — возможна паника, дезертирство или невыполнение приказа отдельным подразделением');
+    if(causes.length === 0) causes.push('внезапный фактор — отказ техники, ошибка связи, метеосюрприз или локальный прорыв на второстепенном участке');
+    return causes[Math.floor(Math.random()*causes.length)];
 }
 
 function createCampaign(){
@@ -2372,7 +2435,8 @@ function createCampaign(){
         operations: [],
         aiSummary: null,
         atkSuccess: 50,
-        defSuccess: 50
+        defSuccess: 50,
+        state: { sectors: {} }
     };
     
     campaigns.push(campaign);
@@ -2385,11 +2449,50 @@ function createCampaign(){
     alert(`🚀 Кампания "${name}" создана!`);
 }
 
+function renderCampaignOpContext(){
+    const box = document.getElementById('campaignOpContext');
+    if(!box) return;
+    const campId = document.getElementById('campaignSelect').value;
+    const campaign = campaigns.find(c => c.id === campId);
+    const sectorList = document.getElementById('campaignSectorList');
+    if(!campaign){ box.innerHTML=''; if(sectorList) sectorList.innerHTML=''; return; }
+    
+    if(sectorList){
+        const names = Object.keys((campaign.state && campaign.state.sectors) || {});
+        sectorList.innerHTML = names.map(n => `<option value="${n}">`).join('');
+    }
+    
+    const sectorInput = document.getElementById('campaignSector');
+    const sectorName = (sectorInput && sectorInput.value.trim()) || DEFAULT_SECTOR_NAME;
+    const sec = getCampaignSectorPreview(campaign, sectorName);
+    
+    const attackerChoice = document.getElementById('campaignAttacker').value;
+    const attackerName = attackerChoice === 'sideA' ? campaign.sideA.name : campaign.sideB.name;
+    
+    box.innerHTML = `
+        <div style="background:var(--bg2); border:1px solid var(--line); border-left:3px solid var(--brass); padding:10px 14px; font-size:12.5px; color:var(--ink-dim); border-radius:4px;">
+            <b style="color:var(--brass);">📍 Текущая обстановка — «${sectorName}»</b><br>
+            Линия фронта: ${sec.frontLine}<br>
+            Удалённость наступающего (${attackerName}) от баз снабжения: ${sec.distance}% ·
+            Логистика: ${bucketLabel(sec.atkLogistics, LOGISTICS_BUCKETS)} (${Math.round(sec.atkLogistics)}) ·
+            Мораль: ${bucketLabel(sec.atkMorale, MORALE_BUCKETS)} (${Math.round(sec.atkMorale)})<br>
+            ${sec.culmination ? '<span style="color:var(--danger);">⚠️ Наступающий достиг точки кульминации — требуется оперативная пауза, эффект следующих операций снижен.</span>' : `Подряд успешных операций без паузы: ${sec.consecutiveSuccesses}`}
+        </div>
+    `;
+}
+// Предпросмотр состояния сектора без его создания в кампании (для отображения до первой операции)
+function getCampaignSectorPreview(campaign, sectorName){
+    const key = (sectorName || DEFAULT_SECTOR_NAME).trim() || DEFAULT_SECTOR_NAME;
+    if(campaign.state && campaign.state.sectors && campaign.state.sectors[key]) return campaign.state.sectors[key];
+    return freshSectorState();
+}
+
 async function addCampaignOperation(){
     const campId = document.getElementById('campaignSelect').value;
     const opType = document.getElementById('campaignOpType').value;
     const desc = document.getElementById('campaignOpDesc').value.trim();
     const attackerChoice = document.getElementById('campaignAttacker').value;
+    const sectorName = (document.getElementById('campaignSector').value || '').trim() || DEFAULT_SECTOR_NAME;
     
     if(!campId){ alert('Выберите кампанию'); return; }
     if(!desc){ alert('Опишите операцию'); return; }
@@ -2410,6 +2513,9 @@ async function addCampaignOperation(){
         campaign.status = 'active_defender';
     }
     
+    const sec = getCampaignSector(campaign, sectorName);
+    const eventHint = buildRandomEventHint(sec);
+    
     const params = {
         operationType: opType,
         terrain: document.getElementById('campaignTerrain').value,
@@ -2419,36 +2525,60 @@ async function addCampaignOperation(){
         airDefense: document.getElementById('campaignAirDefense').value,
         cyberDefense: document.getElementById('campaignCyberDefense').value,
         recon: document.getElementById('campaignRecon').value,
-        logistics: document.getElementById('campaignLogistics').value,
-        morale: document.getElementById('campaignMorale').value,
+        logistics: bucketLabel(sec.atkLogistics, LOGISTICS_BUCKETS),
+        morale: bucketLabel(sec.atkMorale, MORALE_BUCKETS),
         populationSupport: document.getElementById('campaignPopulationSupport').value,
-        distance: parseInt(document.getElementById('campaignDistance').value, 10)
+        distance: sec.distance
     };
     
     const branchesData = getBranchesData('campaignBranchesContainer');
     
-    const opResult = await generateCampaignOperationDescription(attacker, defender, params, desc, campaign, branchesData);
+    const rawResult = await generateCampaignOperationDescription(attacker, defender, params, desc, campaign, branchesData, sec, sectorName, eventHint);
+    const parsed = parseOperationOutcome(rawResult);
+    const result = parsed.result; // 'success' | 'failure' | 'stalemate'
     
-    let result = 'in_progress';
-    let casualties = '';
-    const lowerResult = opResult.toLowerCase();
+    const weights = OPERATION_WEIGHTS[opType] || OPERATION_WEIGHTS.offensive;
+    const wasCulminating = sec.culmination;
+    const fatigueMult = wasCulminating ? 0.5 : 1; // п.4: на пике/паузе эффект операций снижен
     
-    if(lowerResult.includes('успех') || lowerResult.includes('прорыв') || lowerResult.includes('победа')){
-        result = 'success';
-        casualties = 'Умеренные потери.';
-        campaign.atkSuccess = Math.min(100, campaign.atkSuccess + 10);
-        campaign.defSuccess = Math.max(0, campaign.defSuccess - 10);
-    } else if(lowerResult.includes('провал') || lowerResult.includes('поражение') || lowerResult.includes('отступление')){
-        result = 'failure';
-        casualties = 'Тяжёлые потери.';
-        campaign.atkSuccess = Math.max(0, campaign.atkSuccess - 15);
-        campaign.defSuccess = Math.min(100, campaign.defSuccess + 15);
+    let atkDelta = 0, defDelta = 0;
+    if(result === 'success'){
+        atkDelta = Math.round(weights.success * fatigueMult);
+        defDelta = -atkDelta;
+    } else if(result === 'failure'){
+        atkDelta = -weights.failure;
+        defDelta = weights.failure;
     } else {
-        result = 'stalemate';
-        casualties = 'Значительные потери с обеих сторон.';
-        campaign.atkSuccess = Math.max(0, campaign.atkSuccess - 5);
-        campaign.defSuccess = Math.min(100, campaign.defSuccess + 5);
+        atkDelta = -weights.stalemate;
+        defDelta = weights.stalemate;
     }
+    campaign.atkSuccess = Math.max(0, Math.min(100, campaign.atkSuccess + atkDelta));
+    campaign.defSuccess = Math.max(0, Math.min(100, campaign.defSuccess + defDelta));
+    
+    // --- Обновление персистентного состояния сектора (п.2, п.3, п.4) ---
+    if(result === 'success'){
+        sec.distance = Math.min(95, sec.distance + weights.success * 0.8);
+        sec.atkMorale = Math.min(100, sec.atkMorale + 8);
+        sec.consecutiveSuccesses++;
+        sec.opsSincePause++;
+    } else if(result === 'failure'){
+        sec.distance = Math.max(10, sec.distance - weights.failure * 0.5);
+        sec.atkMorale = Math.max(0, sec.atkMorale - 12);
+        sec.consecutiveSuccesses = 0;
+        sec.opsSincePause = 0;
+        sec.culmination = false; // провал = вынужденная пауза, усталость снята
+    } else {
+        sec.distance = Math.min(95, sec.distance + 1);
+        sec.atkMorale = Math.max(0, sec.atkMorale - 3);
+        sec.consecutiveSuccesses = 0;
+        sec.opsSincePause = 0;
+        sec.culmination = false; // пат тоже даёт передышку
+    }
+    sec.atkLogistics = Math.max(5, Math.min(100, 100 - sec.distance * 0.5 - sec.opsSincePause * 3));
+    if(sec.consecutiveSuccesses >= 3) sec.culmination = true;
+    if(parsed.frontLine) sec.frontLine = parsed.frontLine;
+    sec.history.push(`${document.getElementById('rpDate').textContent}: ${opType} — ${result}${parsed.specialEvent ? ' · ' + parsed.specialEvent : ''}`);
+    if(sec.history.length > 5) sec.history.shift();
     
     // Проверка победы защитника
     if(campaign.atkSuccess <= 0){
@@ -2456,6 +2586,7 @@ async function addCampaignOperation(){
         campaign.atkSuccess = 0;
         const summary = await generateCampaignSummaryAI(campaign);
         campaign.aiSummary = summary;
+        pushCampaignOperation(campaign, opType, desc, attacker, defender, branchesData, rawResult, result, parsed, sectorName);
         saveCampaigns();
         renderCampaigns();
         alert(`🛡️ Обороняющийся (${defender.name}) одержал победу в кампании!`);
@@ -2463,41 +2594,83 @@ async function addCampaignOperation(){
     }
     
     // Проверка победы наступающего
-    const successOps = campaign.operations.filter(op => op.result === 'success').length;
-    if(campaign.atkSuccess >= 100 || successOps >= 4){
+    if(campaign.atkSuccess >= 100){
         campaign.status = 'completed';
         campaign.atkSuccess = 100;
         const summary = await generateCampaignSummaryAI(campaign);
         campaign.aiSummary = summary;
+        pushCampaignOperation(campaign, opType, desc, attacker, defender, branchesData, rawResult, result, parsed, sectorName);
         saveCampaigns();
         renderCampaigns();
         alert(`🏆 Наступающий (${attacker.name}) одержал победу в кампании!`);
         return;
     }
     
-    const operation = {
-        id: 'op_' + Date.now(),
-        type: opType,
-        description: desc,
-        date: document.getElementById('rpDate').textContent,
-        attacker: attacker.name,
-        defender: defender.name,
-        branches: branchesData,
-        aiSummary: opResult,
-        result: result,
-        casualties: casualties
-    };
-    
-    campaign.operations.push(operation);
+    pushCampaignOperation(campaign, opType, desc, attacker, defender, branchesData, rawResult, result, parsed, sectorName);
     saveCampaigns();
     renderCampaigns();
+    renderCampaignOpContext();
     
     document.getElementById('campaignOpDesc').value = '';
     
     alert(`✅ Операция добавлена в кампанию "${campaign.name}"`);
 }
 
-async function generateCampaignOperationDescription(attacker, defender, params, userDesc, campaign, branchesData){
+function pushCampaignOperation(campaign, opType, desc, attacker, defender, branchesData, rawResult, result, parsed, sectorName){
+    const operation = {
+        id: 'op_' + Date.now(),
+        type: opType,
+        sector: sectorName,
+        description: desc,
+        date: document.getElementById('rpDate').textContent,
+        attacker: attacker.name,
+        defender: defender.name,
+        branches: branchesData,
+        aiSummary: rawResult,
+        result: result,
+        casualties: parsed.casualties || 'Потери сторон не детализированы.',
+        specialEvent: parsed.specialEvent || null,
+        frontLine: parsed.frontLine || null
+    };
+    campaign.operations.push(operation);
+}
+
+// Строгий разбор ответа ИИ (п.1: не искать слова по всему тексту, а парсить
+// поименованные поля, заканчивающиеся явным маркером ИТОГ: УСПЕХ/ПРОВАЛ/ПАТ)
+function parseOperationOutcome(text){
+    const lines = String(text || '').split('\n').map(l => l.trim()).filter(Boolean);
+    let result = null, frontLine = null, casualties = null, specialEvent = null;
+    
+    for(const line of lines){
+        let m;
+        if((m = line.match(/^ИТОГ\s*:\s*(.+)$/i))){
+            const v = m[1].toUpperCase();
+            if(/\bУСПЕХ\b/.test(v)) result = 'success';
+            else if(/\bПРОВАЛ\b/.test(v)) result = 'failure';
+            else if(/\bПАТ\b/.test(v)) result = 'stalemate';
+        } else if((m = line.match(/^ЛИНИЯ ФРОНТА\s*:\s*(.+)$/i))){
+            frontLine = m[1];
+        } else if((m = line.match(/^ПОТЕРИ\s*:\s*(.+)$/i))){
+            casualties = m[1];
+        } else if((m = line.match(/^ОСОБОЕ\s*:\s*(.+)$/i))){
+            specialEvent = /^нет\.?$/i.test(m[1].trim()) ? null : m[1];
+        }
+    }
+    
+    if(!result){
+        // Резервный разбор: только по последним 2 строкам, строго по границе слова —
+        // а не поиском подстроки по всему тексту (это и было источником багов).
+        const tail = lines.slice(-2).join(' ').toUpperCase();
+        if(/\bПРОВАЛ\b/.test(tail)) result = 'failure';
+        else if(/\bУСПЕХ\b/.test(tail)) result = 'success';
+        else if(/\bПАТ\b/.test(tail)) result = 'stalemate';
+        else result = 'stalemate';
+    }
+    
+    return { result, frontLine, casualties, specialEvent };
+}
+
+async function generateCampaignOperationDescription(attacker, defender, params, userDesc, campaign, branchesData, sec, sectorName, eventHint){
     const terrainLabel = TERRAIN_LABELS[params.terrain] || params.terrain;
     const climateLabel = CLIMATE_LABELS[params.climate] || params.climate;
     
@@ -2520,13 +2693,24 @@ async function generateCampaignOperationDescription(attacker, defender, params, 
         }
     }
     
-    const prompt = `Ты — военный аналитик. Опиши ход операции в рамках кампании "${campaign.name}".
+    const recentOps = campaign.operations.filter(op => (op.sector || DEFAULT_SECTOR_NAME) === sectorName).slice(-3);
+    const historyStr = recentOps.length
+        ? recentOps.map((op,i) => `${i+1}. [${op.date}] ${op.type}: ${op.description} → ${op.result || '?'}${op.casualties ? ' (' + op.casualties + ')' : ''}`).join('\n')
+        : 'Операций на этом участке ещё не было.';
+    
+    const prompt = `Ты — военный аналитик. Опиши ход операции в рамках кампании "${campaign.name}" на участке «${sectorName}».
 
 АТАКУЮЩАЯ СТОРОНА: ${attacker.name}
 ОБОРОНЯЮЩАЯСЯ СТОРОНА: ${defender.name}
 ТИП ОПЕРАЦИИ: ${params.operationType}
 
-ПАРАМЕТРЫ:
+ПЕРСИСТЕНТНАЯ ОБСТАНОВКА НА УЧАСТКЕ (накоплена по ходу кампании, не придумывай другую):
+- Текущая линия фронта: ${sec.frontLine}
+- Подряд успешных операций наступающего без паузы: ${sec.consecutiveSuccesses}${sec.culmination ? ' — НАСТУПЛЕНИЕ ДОСТИГЛО ТОЧКИ КУЛЬМИНАЦИИ: войска измотаны, резервы не подтянуты, эффективность снижена' : ''}
+- Последние операции на этом участке:
+${historyStr}
+
+ПАРАМЕТРЫ ОПЕРАЦИИ:
 - Рельеф: ${terrainLabel}
 - Климат: ${climateLabel}
 - Время суток: ${params.timeOfDay}
@@ -2534,23 +2718,29 @@ async function generateCampaignOperationDescription(attacker, defender, params, 
 - ПВО: ${params.airDefense}
 - Киберзащита: ${params.cyberDefense}
 - Разведка: ${params.recon}
-- Логистика: ${params.logistics}
-- Мораль: ${params.morale}
+- Логистика наступающего (производная от хода кампании): ${params.logistics}
+- Мораль наступающего (производная от хода кампании): ${params.morale}
 - Поддержка населения: ${params.populationSupport}
-- Удалённость от баз: ${params.distance}%
+- Удалённость от баз снабжения (растёт по мере продвижения): ${params.distance}%
 
 ЗАДАЧИ РОДОВ ВОЙСК:${branchesStr || ' Не заданы'}
 
 ОПИСАНИЕ ОТ ПОЛЬЗОВАТЕЛЯ: ${userDesc}
+${eventHint ? `\nВОЗМОЖНОЕ НЕПРЕДВИДЕННОЕ ОБСТОЯТЕЛЬСТВО (учти, если это логично вписывается в обстановку; ты не обязан его использовать, если оно противоречит матчасти): ${eventHint}` : ''}
 
-Опиши ход операции. В конце укажи: УСПЕХ, ПРОВАЛ или ПАТ.
-Пиши сухо, по-военному, только факты. Без метафор и цифр.`;
+Пиши сухо, по-военному, только факты. Без метафор и цифр (проценты и km не используй).
+Учитывай усталость и накопленные потери, если наступление у точки кульминации — покажи это в тексте (нехватка сил, задержки, меньший размах).
+В САМОМ КОНЦЕ ответа выведи ровно четыре строки в этом формате и больше ничего после них:
+ИТОГ: <УСПЕХ или ПРОВАЛ или ПАТ>
+ЛИНИЯ ФРОНТА: <краткое описание, где сейчас проходит линия фронта после этой операции>
+ПОТЕРИ: <качественное описание характера потерь — какие рода войск пострадали сильнее, есть ли пленные/окружённые, без цифр>
+ОСОБОЕ: <если в ходе операции произошло непредвиденное событие — опиши его одной фразой, иначе напиши "нет">`;
 
     try {
         const result = await callOpenRouter(prompt);
         return result;
     } catch (error) {
-        return '⚠️ Не удалось сгенерировать описание операции.';
+        return '⚠️ Не удалось сгенерировать описание операции.\nИТОГ: ПАТ\nЛИНИЯ ФРОНТА: без изменений\nПОТЕРИ: не определены\nОСОБОЕ: нет';
     }
 }
 
@@ -2565,7 +2755,7 @@ async function generateCampaignSummaryAI(campaign){
 СТРАТЕГИЧЕСКАЯ ЦЕЛЬ: ${campaign.goal}
 
 ОПЕРАЦИИ В КАМПАНИИ:
-${campaign.operations.map((op, i) => `${i+1}. ${op.type}: ${op.description} (${op.result || 'В процессе'})`).join('\n')}
+${campaign.operations.map((op, i) => `${i+1}. [${op.sector || DEFAULT_SECTOR_NAME}] ${op.type}: ${op.description} (${op.result || 'В процессе'})${op.casualties ? ' — ' + op.casualties : ''}${op.specialEvent ? ' — ' + op.specialEvent : ''}`).join('\n')}
 
 Напиши итоговую сводку кампании. Пиши сухо, по-военному.`;
 
