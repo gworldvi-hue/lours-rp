@@ -357,8 +357,43 @@ footer{border-top:1px solid var(--line); padding:24px 32px; text-align:center; c
 .unit-strength.medium {background:var(--brass-dim); color:var(--bg);}
 .unit-strength.low {background:var(--danger); color:var(--bg);}
 </style>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
+<style>
+#realMap{height:560px;border:1px solid var(--line);background:#0b0f0d;}
+.admin-btn{font-family:'JetBrains Mono',monospace;font-size:12px;background:transparent;border:1px solid var(--brass-dim);color:var(--brass);padding:10px 16px;cursor:pointer;}
+.dip-card{border:1px solid var(--line);background:var(--panel2);padding:10px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;border-left:4px solid var(--brass);}
+.dip-tag{font-family:'JetBrains Mono',monospace;font-size:11px;padding:2px 10px;border-radius:10px;color:#141b18;}
+.econ-lock{font-size:12px;color:var(--brass-dim);font-family:'JetBrains Mono',monospace;margin:0 0 10px;}
+</style>
+<style>
+html{scroll-behavior:smooth}
+body{line-height:1.5;-webkit-font-smoothing:antialiased}
+::-webkit-scrollbar{width:10px;height:10px}::-webkit-scrollbar-thumb{background:var(--line);border-radius:5px}::-webkit-scrollbar-track{background:var(--bg)}
+.topbar{padding:14px 24px 8px}
+.tabs{overflow-x:auto;flex-wrap:nowrap;align-items:center;scrollbar-width:thin;padding-bottom:4px}
+.tab-btn{white-space:nowrap;border-radius:6px;flex-shrink:0}
+.tools{margin-left:auto;display:flex;gap:6px;align-items:center;flex-shrink:0;padding-left:12px}
+.admin-btn{border-radius:6px;white-space:nowrap;transition:.15s}.admin-btn:hover{background:rgba(201,162,39,.12)}
+#saveInd{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink-faint);white-space:nowrap}
+h2{font-size:30px;margin:6px 0 18px}
+.panel{border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.28)}
+.news-card,.campaign-card,.stat,.vs-side,.dip-card,.branch-card,.strike-card{border-radius:8px;transition:border-color .15s,transform .15s}
+.news-card:hover,.campaign-card:hover,.stat:hover,.dip-card:hover{border-color:var(--brass-dim);transform:translateY(-1px)}
+select,input[type=text],input[type=number],textarea{border-radius:6px;transition:border-color .15s,box-shadow .15s}
+select:focus,input:focus,textarea:focus{box-shadow:0 0 0 3px rgba(201,162,39,.18)}
+button.btn{border-radius:6px;box-shadow:0 2px 0 rgba(0,0,0,.35)}button.btn:active{transform:translateY(1px);box-shadow:none}
+button.btn:disabled{position:relative}button.btn:disabled::after{content:"";display:inline-block;width:10px;height:10px;margin-left:8px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:spin .7s linear infinite;vertical-align:-1px}
+@keyframes spin{to{transform:rotate(360deg)}}
+thead th{position:sticky;top:0;background:var(--panel)}tbody tr:nth-child(even){background:rgba(255,255,255,.015)}
+.map-stage,#realMap{border-radius:8px}
+#toasts{position:fixed;right:16px;bottom:16px;display:flex;flex-direction:column;gap:8px;z-index:9999;max-width:min(380px,calc(100vw - 32px))}
+.toast{background:var(--panel2);border:1px solid var(--brass-dim);border-left:4px solid var(--brass);color:var(--ink);padding:10px 14px;border-radius:6px;font-size:13px;box-shadow:0 8px 24px rgba(0,0,0,.4);animation:fadein .2s ease;white-space:pre-line}
+.banner{background:rgba(179,69,47,.15);border-bottom:1px solid var(--danger);color:var(--ink);font-size:12.5px;padding:8px 24px;text-align:center}
+@media(max-width:700px){main{padding:20px 14px 60px}.topbar{padding:10px 14px 6px}.panel{padding:16px}.stat{min-width:46%}.vs-block{flex-direction:column}h2{font-size:24px}.brand-sub{display:none}#saveInd{display:none}}
+</style>
 </head>
 <body>
+<div id="toasts"></div>
 
 <header class="topbar">
   <div class="topbar-inner">
@@ -374,12 +409,14 @@ footer{border-top:1px solid var(--line); padding:24px 32px; text-align:center; c
   <nav class="tabs">
     <button class="tab-btn active" data-view="news">Сводка новостей</button>
     <button class="tab-btn" data-view="econ">Экономика</button>
+    <button class="tab-btn" data-view="dip">Дипломатия</button>
     <button class="tab-btn" data-view="war">Военный анализ</button>
     <button class="tab-btn" data-view="strikes">Боевые акции</button>
     <button class="tab-btn" data-view="campaigns">Кампании</button>
     <button class="tab-btn" data-view="maps">Карты мира</button>
     <button class="tab-btn" data-view="importtg">Импорт из Telegram</button>
     <button class="tab-btn" data-view="portal">Портал / ТГ-ресурсы</button>
+    <span class="tools"><span id="saveInd">💾 —</span><button class="admin-btn" onclick="exportAll()" title="Скачать резервную копию">⬇ Экспорт</button><button class="admin-btn" onclick="document.getElementById('impFile').click()" title="Загрузить резервную копию">⬆ Импорт</button><input type="file" id="impFile" accept=".json" hidden onchange="importAll(event)"><button class="admin-btn" id="adminBtn" onclick="toggleAdmin(event)">🔒 Админ</button></span>
   </nav>
 </header>
 
@@ -471,7 +508,8 @@ footer{border-top:1px solid var(--line); padding:24px 32px; text-align:center; c
           <tbody id="econTbody"></tbody>
         </table>
       </div>
-      <p class="note">Кликните на ячейку → введите новое число.</p>
+      <p class="econ-lock" id="econLock"></p>
+      <p class="note">Кликните на ячейку → введите новое число (нужен пароль админа).</p>
     </div>
     <div class="panel">
       <h3>Добавить страну</h3>
@@ -483,6 +521,27 @@ footer{border-top:1px solid var(--line); padding:24px 32px; text-align:center; c
       </div>
       <button class="btn" onclick="addCountry()">Добавить</button>
       <button class="btn ghost" onclick="resetData()">Сбросить данные</button>
+      <button class="btn ghost" onclick="changeAdminPw()">Сменить пароль</button>
+    </div>
+  </section>
+
+  <section class="view" id="view-dip">
+    <div class="eyebrow">Международные отношения</div>
+    <h2>Дипломатия</h2>
+    <div class="panel">
+      <div class="row">
+        <div class="field"><label>Сторона A</label><select id="dipA"></select></div>
+        <div class="field"><label>Сторона B</label><select id="dipB"></select></div>
+        <div class="field"><label>Тип отношений</label><select id="dipType"></select></div>
+      </div>
+      <div class="field"><label>Примечание</label><input type="text" id="dipNote" placeholder="договор, повод, условия..."></div>
+      <button class="btn" onclick="setRelationForm()">Установить</button>
+      <button class="btn ghost" onclick="applyDipEffects()">Применить эффекты за период</button>
+      <p class="note">Санкции направлены от A к B. Остальные типы двусторонние. На пару действует одно отношение. Редактирование — по паролю админа. Новая кампания автоматически объявляет войну.</p>
+    </div>
+    <div class="panel">
+      <div class="field"><label>Фильтр по стране</label><select id="dipFilter" onchange="renderDip()"></select></div>
+      <div id="dipList"></div>
     </div>
   </section>
 
@@ -986,6 +1045,7 @@ footer{border-top:1px solid var(--line); padding:24px 32px; text-align:center; c
         <button class="map-tab-btn" data-map="relief">Рельеф</button>
         <button class="map-tab-btn" data-map="klimat">Климат</button>
         <button class="map-tab-btn" data-map="compare">Сравнение</button>
+        <button class="map-tab-btn" data-map="real">🌍 Реальная карта</button>
       </div>
       <div id="mapSingle" class="map-stage">
         <img id="mapImg" src="karta_politika.jpg" alt="карта">
@@ -1014,6 +1074,20 @@ footer{border-top:1px solid var(--line); padding:24px 32px; text-align:center; c
             </select>
           </div>
         </div>
+      </div>
+      <div id="mapReal" style="display:none;">
+        <div class="row" style="margin-bottom:10px;">
+          <div class="field"><label>Кампания</label><select id="frontCamp"></select></div>
+          <div class="field"><label>Участок</label><input type="text" id="frontSector" value="Основной участок"></div>
+        </div>
+        <div class="row" style="margin-bottom:10px;">
+          <button class="btn" id="frontDrawBtn" onclick="frontStart()">✏️ Рисовать линию</button>
+          <button class="btn ghost" onclick="frontSave()">✔ Сохранить</button>
+          <button class="btn ghost" onclick="frontUndo()">↩ Точка</button>
+          <button class="btn ghost" onclick="frontCancel()">✖ Отмена</button>
+        </div>
+        <div id="realMap"></div>
+        <div id="frontSaved" style="margin-top:10px;"></div>
       </div>
       <p class="map-caption" id="mapCaption">Политическая карта мира Lours.</p>
       
@@ -1154,6 +1228,7 @@ footer{border-top:1px solid var(--line); padding:24px 32px; text-align:center; c
   LOURS RP · штабная карта мира · данные в localStorage
 </footer>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script>
 /* =====================================================================
    НАСТРОЙКА — OPENROUTER
@@ -1296,6 +1371,7 @@ function loadUnits(){
 function saveUnits(){ try{ localStorage.setItem(UNITS_KEY, JSON.stringify(units)); }catch(e){} }
 
 function resetData(){
+  if(!requireAdmin()) return;
   if(!confirm('Сбросить все данные?')) return;
   countries = JSON.parse(JSON.stringify(SEED_COUNTRIES));
   newsFeed = []; warLog = []; campaigns = []; strikes = []; units = [];
@@ -1398,14 +1474,14 @@ function renderEconTable(){
   tbody.innerHTML = rows.map(c=>`
     <tr data-id="${c.id}">
       <td><span class="swatch" style="background:${c.color}"></span>${c.name}</td>
-      <td class="num" contenteditable="true" data-field="pop">${c.pop}</td>
-      <td class="num" contenteditable="true" data-field="gdp">${c.gdp}</td>
+      <td class="num" contenteditable="${isAdmin()}" data-field="pop">${c.pop}</td>
+      <td class="num" contenteditable="${isAdmin()}" data-field="gdp">${c.gdp}</td>
       <td class="num">${gdpPerCapita(c).toLocaleString('ru')}</td>
-      <td class="num" contenteditable="true" data-field="industry">${c.industry}</td>
-      <td class="num" contenteditable="true" data-field="resources">${c.resources}</td>
-      <td class="num" contenteditable="true" data-field="stability">${c.stability}</td>
+      <td class="num" contenteditable="${isAdmin()}" data-field="industry">${c.industry}</td>
+      <td class="num" contenteditable="${isAdmin()}" data-field="resources">${c.resources}</td>
+      <td class="num" contenteditable="${isAdmin()}" data-field="stability">${c.stability}</td>
       <td class="num mono" style="color:var(--brass)">${powerIndex(c)}</td>
-      <td class="num" contenteditable="true" data-field="trade">${c.trade>0?'+':''}${c.trade}</td>
+      <td class="num" contenteditable="${isAdmin()}" data-field="trade">${c.trade>0?'+':''}${c.trade}</td>
     </tr>
   `).join('') || '<tr><td colspan="9" class="news-empty">Ничего не найдено</td></tr>';
 
@@ -1413,11 +1489,14 @@ function renderEconTable(){
     td.addEventListener('blur', ()=>{
       const id = td.parentElement.dataset.id;
       const field = td.dataset.field;
+      if(!isAdmin()) return;
       const c = countries.find(x=>x.id===id);
       const val = parseFloat(td.textContent.replace(',','.').replace('+',''));
       if(!isNaN(val)){ c[field] = val; saveCountries(); renderEconStats(); renderEconTable(); populateSelectors(); }
     });
   });
+  tbody.onclick = e=>{ const td=e.target.closest('td[data-field]'); if(td && !isAdmin() && requireAdmin()) renderEconTable(); };
+  document.getElementById('econLock').textContent = isAdmin() ? '🔓 Редактирование разрешено' : '🔒 Только просмотр — нажмите на ячейку и введите пароль';
   document.querySelectorAll('th').forEach((th,i)=>{
     th.onclick = ()=>{
       const map = ['name','pop','gdp','gdppc','industry','resources','stability','power','trade'];
@@ -1426,6 +1505,7 @@ function renderEconTable(){
   });
 }
 function addCountry(){
+  if(!requireAdmin()) return;
   const name = document.getElementById('newName').value.trim();
   if(!name){ alert('Введите название'); return; }
   const id = 'c'+Date.now();
@@ -1809,6 +1889,7 @@ async function analyzeAllNewsWithAI() {
    ===================================================================== */
 
 async function applyAIEffectsToEconomy() {
+  if(!requireAdmin()) return;
   if (newsFeed.length === 0) {
     alert('Нет новостей для анализа экономических эффектов.');
     return;
@@ -2142,6 +2223,7 @@ function analyzePost(text, channelHint){
 function applyPostEffects(suggestion){
   const effects = [];
   if(!suggestion.country) return effects;
+  if(!isAdmin()) return ['🔒 нужен доступ админа'];
   const c = suggestion.country;
   const score = suggestion.toneScore || 0;
   
@@ -2686,6 +2768,7 @@ function createCampaign(){
   const sideA = countries.find(c => c.id === sideAId);
   const sideB = countries.find(c => c.id === sideBId);
   
+  setRelation(sideAId, sideBId, 'war', 'Кампания: '+name);
   const campaign = {
     id: 'camp_' + Date.now(),
     name: name,
@@ -3555,7 +3638,13 @@ document.querySelectorAll('.map-tab-btn').forEach(btn=>{
     document.querySelectorAll('.map-tab-btn').forEach(b=>b.classList.remove('active'));
     btn.classList.add('active');
     const key = btn.dataset.map;
-    if(key==='compare'){
+    document.getElementById('mapReal').style.display = key==='real'?'block':'none';
+    if(key==='real'){
+      document.getElementById('mapSingle').style.display='none';
+      document.getElementById('mapCompare').style.display='none';
+      document.getElementById('mapCaption').textContent='Реальная карта: клик по карте добавляет точки фронта';
+      initRealMap();
+    } else if(key==='compare'){
       document.getElementById('mapSingle').style.display='none';
       document.getElementById('mapCompare').style.display='block';
       document.getElementById('mapCaption').textContent = 'Сравнение слоёв';
@@ -3599,6 +3688,7 @@ function initAll(){
   renderCampaigns();
   renderStrikeHistory();
   renderFrontlines();
+  renderDip();
   updateCompareLayers();
   startAutoImport();
   
@@ -3607,7 +3697,180 @@ function initAll(){
   }, 3000);
 }
 
+
+/* ===== АДМИН-ДОСТУП ===== */
+const ADMIN_KEY='loursrp_admin_hash_v1';
+function hashPw(str){const s='lours|'+str;let h1=0xdeadbeef,h2=0x41c6ce57;for(let i=0;i<s.length;i++){const c=s.charCodeAt(i);h1=Math.imul(h1^c,2654435761);h2=Math.imul(h2^c,1597334677);}h1=Math.imul(h1^(h1>>>16),2246822507)^Math.imul(h2^(h2>>>13),3266489909);h2=Math.imul(h2^(h2>>>16),2246822507)^Math.imul(h1^(h1>>>13),3266489909);return (4294967296*(2097151&h2)+(h1>>>0)).toString(16);}
+function isAdmin(){ try{return sessionStorage.getItem('loursrp_admin')==='1';}catch(e){return false;} }
+function setAdmin(v){ try{sessionStorage.setItem('loursrp_admin',v?'1':'0');}catch(e){} updateAdminBtn(); }
+function updateAdminBtn(){ const b=document.getElementById('adminBtn'); if(b) b.textContent=isAdmin()?'🔓 Админ (выйти)':'🔒 Админ'; }
+function requireAdmin(){
+  if(isAdmin()) return true;
+  let h=null; try{h=localStorage.getItem(ADMIN_KEY);}catch(e){}
+  if(!h){
+    const np=prompt('Пароль админа не задан. Придумайте пароль (от 4 символов):');
+    if(!np || np.length<4){ if(np!==null) alert('Слишком короткий пароль'); return false; }
+    try{localStorage.setItem(ADMIN_KEY,hashPw(np));}catch(e){}
+    setAdmin(true); return true;
+  }
+  const pw=prompt('Введите пароль админа:');
+  if(pw===null) return false;
+  if(hashPw(pw)===h){ setAdmin(true); return true; }
+  alert('Неверный пароль'); return false;
+}
+function toggleAdmin(e){ e.stopPropagation(); if(isAdmin()){ setAdmin(false); } else { requireAdmin(); } renderEconTable(); }
+function changeAdminPw(){
+  if(!requireAdmin()) return;
+  const np=prompt('Новый пароль (от 4 символов):');
+  if(np && np.length>=4){ try{localStorage.setItem(ADMIN_KEY,hashPw(np));}catch(e){} alert('Пароль изменён'); }
+}
+
+/* ===== ДИПЛОМАТИЯ ===== */
+const DIP_KEY='loursrp_diplomacy_v1';
+const DIP_TYPES={alliance:{l:'Союз',c:'#6f9463'},trade:{l:'Торговое соглашение',c:'#c9a227'},nonagr:{l:'Пакт о ненападении',c:'#3f7268'},tension:{l:'Напряжённость',c:'#d1602f'},sanctions:{l:'Санкции',c:'#a8462c'},war:{l:'Война',c:'#b3452f'}};
+let relations=[]; try{ relations=JSON.parse(localStorage.getItem(DIP_KEY)||'[]'); }catch(e){}
+function saveRelations(){ try{localStorage.setItem(DIP_KEY,JSON.stringify(relations));}catch(e){} }
+function cName(id){ const c=countries.find(x=>x.id===id); return c?c.name:'(удалена)'; }
+function setRelation(a,b,type,note){
+  if(!a||!b||a===b) return;
+  relations=relations.filter(r=>!((r.a===a&&r.b===b)||(r.a===b&&r.b===a)));
+  if(type!=='none') relations.push({a,b,type,note:note||'',date:(document.getElementById('rpDate')||{}).textContent||''});
+  saveRelations(); renderDip();
+}
+function getRelation(a,b){ return relations.find(r=>(r.a===a&&r.b===b)||(r.a===b&&r.b===a)); }
+function setRelationForm(){
+  if(!requireAdmin()) return;
+  const a=document.getElementById('dipA').value,b=document.getElementById('dipB').value;
+  if(a===b){ alert('Выберите разные страны'); return; }
+  setRelation(a,b,document.getElementById('dipType').value,document.getElementById('dipNote').value.trim());
+  document.getElementById('dipNote').value='';
+}
+function removeRelation(i){ if(!requireAdmin()) return; relations.splice(i,1); saveRelations(); renderDip(); }
+function renderDip(){
+  const opts=countries.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+  ['dipA','dipB'].forEach(id=>{ const el=document.getElementById(id); const v=el.value; el.innerHTML=opts; if(v) el.value=v; });
+  if(countries.length>1 && document.getElementById('dipA').value===document.getElementById('dipB').value) document.getElementById('dipB').selectedIndex=1;
+  const t=document.getElementById('dipType'); if(!t.options.length) t.innerHTML=Object.entries(DIP_TYPES).map(([k,v])=>`<option value="${k}">${v.l}</option>`).join('');
+  const f=document.getElementById('dipFilter'); const fv=f.value; f.innerHTML='<option value="">— все —</option>'+opts; f.value=fv||'';
+  const list=relations.map((r,i)=>({r,i})).filter(x=>!f.value||x.r.a===f.value||x.r.b===f.value);
+  document.getElementById('dipList').innerHTML=list.map(({r,i})=>{ const T=DIP_TYPES[r.type]; const arrow=r.type==='sanctions'?' → ':' ⇄ ';
+    return `<div class="dip-card" style="border-left-color:${T.c}"><div><b>${esc(cName(r.a))}</b>${arrow}<b>${esc(cName(r.b))}</b><div style="font-size:12px;color:var(--ink-dim);">${esc(r.note)} <span style="color:var(--ink-faint)">${esc(r.date)}</span></div></div><div><span class="dip-tag" style="background:${T.c}">${T.l}</span> <button class="btn ghost" style="padding:5px 10px" onclick="removeRelation(${i})">✕</button></div></div>`;
+  }).join('')||'<div class="news-empty">Отношений нет.</div>';
+}
+function esc(t){ return String(t==null?'':t).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+function applyDipEffects(){
+  if(!requireAdmin()) return;
+  if(!relations.length){ alert('Нет отношений'); return; }
+  if(!confirm('Применить дипломатические эффекты к экономике и стабильности?')) return;
+  const g=(id,k)=>{ const c=countries.find(x=>x.id===id); if(c) c.gdp=Math.max(1,Math.round(c.gdp*k*10)/10); };
+  const st=(id,d)=>{ const c=countries.find(x=>x.id===id); if(c) c.stability=Math.max(1,Math.min(10,Math.round((c.stability+d)*10)/10)); };
+  const log=[];
+  relations.forEach(r=>{
+    if(r.type==='trade'){ g(r.a,1.01); g(r.b,1.01); }
+    else if(r.type==='alliance'){ g(r.a,1.005); g(r.b,1.005); st(r.a,0.1); st(r.b,0.1); }
+    else if(r.type==='sanctions'){ g(r.b,0.97); g(r.a,0.995); st(r.b,-0.2); }
+    else if(r.type==='war'){ g(r.a,0.98); g(r.b,0.98); st(r.a,-0.2); st(r.b,-0.2); }
+    else if(r.type==='tension'){ st(r.a,-0.05); st(r.b,-0.05); }
+    else return;
+    log.push(`${cName(r.a)}–${cName(r.b)}: ${DIP_TYPES[r.type].l}`);
+  });
+  newsFeed.unshift({cat:'ДИПЛОМАТИЯ',date:document.getElementById('rpDate').textContent,title:'Итоги дипломатического периода',text:esc(log.join('; ')),effect:'ВВП и стабильность скорректированы по отношениям'});
+  saveCountries(); saveNews(); renderNews(); renderEconStats(); renderEconTable(); populateSelectors(); renderDip();
+  alert('Эффекты применены');
+}
+
+/* ===== РЕАЛЬНАЯ КАРТА И ЛИНИИ ФРОНТА ===== */
+const FRONT_KEY='loursrp_fronts_v1';
+let fronts=[]; try{ fronts=JSON.parse(localStorage.getItem(FRONT_KEY)||'[]'); }catch(e){}
+function saveFronts(){ try{localStorage.setItem(FRONT_KEY,JSON.stringify(fronts));}catch(e){} }
+let realMap=null, frontLayer=null, draftPts=[], draftLine=null, drawing=false;
+function initRealMap(){
+  if(typeof L==='undefined'){ document.getElementById('realMap').innerHTML='<div class="news-empty" style="padding:20px">Leaflet не загрузился — проверьте интернет.</div>'; return; }
+  if(!realMap){
+    realMap=L.map('realMap',{worldCopyJump:true}).setView([30,20],3);
+    const osm=L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{attribution:'© OpenStreetMap, © CARTO',maxZoom:18});
+    const sat=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:18});
+    const lours=L.imageOverlay('karta_politika.jpg',[[-85,-180],[85,180]],{opacity:0.6});
+    osm.addTo(realMap);
+    L.control.layers({'Тёмная':osm,'Стандартная':sat},{'Карта Lours (наложение)':lours}).addTo(realMap);
+    frontLayer=L.layerGroup().addTo(realMap);
+    realMap.on('click',e=>{ if(!drawing) return; draftPts.push([e.latlng.lat,e.latlng.lng]); drawDraft(); });
+  }
+  const sel=document.getElementById('frontCamp');
+  sel.innerHTML=campaigns.filter(c=>c.status==='active'||c.status==='active_defender').map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('')||'<option value="">— нет активных кампаний —</option>';
+  setTimeout(()=>{ realMap.invalidateSize(); renderFronts(); },100);
+}
+function drawDraft(){
+  if(draftLine) realMap.removeLayer(draftLine);
+  draftLine=L.polyline(draftPts,{color:'#fff',weight:3,dashArray:'6 6'}).addTo(realMap);
+}
+function frontStart(){ drawing=true; draftPts=[]; if(draftLine){realMap.removeLayer(draftLine);draftLine=null;} document.getElementById('frontDrawBtn').textContent='✏️ Кликайте по карте...'; realMap.getContainer().style.cursor='crosshair'; }
+function frontUndo(){ draftPts.pop(); drawDraft(); }
+function frontCancel(){ drawing=false; draftPts=[]; if(draftLine){realMap.removeLayer(draftLine);draftLine=null;} document.getElementById('frontDrawBtn').textContent='✏️ Рисовать линию'; realMap.getContainer().style.cursor=''; }
+function frontSave(){
+  const cid=document.getElementById('frontCamp').value;
+  if(!cid){ alert('Выберите кампанию'); return; }
+  if(draftPts.length<2){ alert('Поставьте минимум 2 точки'); return; }
+  const sector=document.getElementById('frontSector').value.trim()||'Основной участок';
+  fronts=fronts.filter(f=>!(f.campaignId===cid&&f.sector===sector));
+  fronts.push({id:'f'+Date.now(),campaignId:cid,sector,pts:draftPts.slice(),date:document.getElementById('rpDate').textContent});
+  saveFronts(); frontCancel(); renderFronts();
+}
+function deleteFront(id){ fronts=fronts.filter(f=>f.id!==id); saveFronts(); renderFronts(); }
+function renderFronts(){
+  if(!frontLayer) return;
+  frontLayer.clearLayers();
+  fronts.forEach(f=>{
+    const c=campaigns.find(x=>x.id===f.campaignId);
+    const color=(c&&c.sideA&&c.sideA.color)||'#d1602f';
+    const line=L.polyline(f.pts,{color,weight:4}).addTo(frontLayer);
+    line.bindPopup(`<b>${esc(c?c.name:'Кампания удалена')}</b><br>${esc(f.sector)}<br>${esc(f.date)}`);
+    f.pts.forEach(pt=>L.circleMarker(pt,{radius:4,color,fillOpacity:1}).addTo(frontLayer));
+  });
+  document.getElementById('frontSaved').innerHTML=fronts.map(f=>{ const c=campaigns.find(x=>x.id===f.campaignId); return `<div class="dip-card"><span>${esc(c?c.name:'—')} · ${esc(f.sector)} <span style="color:var(--ink-faint)">(${f.pts.length} точек)</span></span><button class="btn ghost" style="padding:5px 10px" onclick="deleteFront('${f.id}')">✕</button></div>`; }).join('');
+}
+
+/* ===== СОХРАНЕНИЕ ПРОГРЕССА, УВЕДОМЛЕНИЯ ===== */
+function toast(msg,ms){ const d=document.createElement('div'); d.className='toast'; d.textContent=msg; document.getElementById('toasts').appendChild(d); setTimeout(()=>d.remove(),ms||4500); }
+window.alert=m=>toast(String(m),6000);
+function markSaved(){ const e=document.getElementById('saveInd'); if(e) e.textContent='💾 сохранено '+new Date().toLocaleTimeString('ru',{hour:'2-digit',minute:'2-digit'}); }
+(function(){
+  const _set=Storage.prototype.setItem;
+  Storage.prototype.setItem=function(k,v){
+    try{ _set.call(this,k,v); if(this===localStorage&&String(k).startsWith('loursrp_')) markSaved(); }
+    catch(e){ toast('⚠️ Не удалось сохранить прогресс: хранилище браузера недоступно или переполнено. Сделайте «Экспорт».',9000); throw e; }
+  };
+})();
+function saveAll(){ try{ saveCountries(); saveNews(); saveWarLog(); saveCampaigns(); saveStrikes(); saveUnits(); saveRelations(); saveFronts(); }catch(e){} }
+window.addEventListener('pagehide',saveAll);
+document.addEventListener('visibilitychange',()=>{ if(document.hidden) saveAll(); });
+if(navigator.storage&&navigator.storage.persist) navigator.storage.persist().catch(()=>{});
+if(location.protocol==='file:'){ const b=document.createElement('div'); b.className='banner'; b.textContent='Страница открыта как файл (file://): многие браузеры не хранят прогресс между запусками. Откройте через хостинг/локальный сервер или делайте «Экспорт».'; document.body.prepend(b); }
+function exportAll(){
+  const dump={_app:'loursrp',_v:2,_date:new Date().toISOString(),data:{}};
+  for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(k.startsWith('loursrp_')&&k!==ADMIN_KEY) dump.data[k]=localStorage.getItem(k); }
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([JSON.stringify(dump)],{type:'application/json'}));
+  a.download='lours_backup_'+new Date().toISOString().slice(0,10)+'.json'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+}
+function importAll(ev){
+  const f=ev.target.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=()=>{ try{
+    const d=JSON.parse(r.result); if(d._app!=='loursrp'||!d.data) throw new Error('не резервная копия Lours');
+    if(!confirm('Заменить текущий прогресс данными из файла?')) return;
+    Object.entries(d.data).forEach(([k,v])=>{ if(k.startsWith('loursrp_')&&k!==ADMIN_KEY) localStorage.setItem(k,v); });
+    location.reload();
+  }catch(e){ toast('Ошибка импорта: '+e.message); } };
+  r.readAsText(f); ev.target.value='';
+}
+/* запоминаем вкладку */
+document.querySelectorAll('.tab-btn').forEach(b=>b.addEventListener('click',()=>{ try{localStorage.setItem('loursrp_tab',b.dataset.view);}catch(e){} }));
+try{ const t=localStorage.getItem('loursrp_tab'); const b=t&&document.querySelector('.tab-btn[data-view="'+t+'"]'); if(b) b.click(); }catch(e){}
+
+updateAdminBtn();
+renderDip();
 initAll();
+markSaved();
 </script>
 </body>
 </html>
